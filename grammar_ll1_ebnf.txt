@@ -1,0 +1,54 @@
+program_all -> procedure* main
+
+procedure -> PROCEDURE proc_head IS ( declarations | epsilon ) IN commands END
+
+main -> PROGRAM IS ( declarations | epsilon ) IN commands END
+
+commands -> command+
+
+command -> pidentifier commandidtail ;
+| IF condition THEN commands ELSE commands ENDIF
+| IF condition THEN commands ENDIF
+| WHILE condition DO commands ENDWHILE
+| REPEAT commands UNTIL condition ;
+| FOR pidentifier FROM value TO value DO commands ENDFOR
+| FOR pidentifier FROM value DOWNTO value DO commands ENDFOR
+| READ identifier ;
+| WRITE value ;
+
+commandidtail -> idtail := expression | ( args )
+
+proc_head -> pidentifier ( args_decl )
+
+declarations -> declaration (, declaration)*
+
+declaration -> pidentifier decltail
+decltail -> [ num : num ] | epsilon
+
+args_decl -> type pidentifier (, type pidentifier)*
+
+type -> T | I | O | epsilon
+
+args -> pidentifier (, pidentifier)*
+
+expression -> value exptail
+exptail -> + value
+| - value
+| * value
+| / value
+| % value
+| epsilon
+
+condition -> value condtail
+condtail -> = value
+| != value
+| > value
+| < value
+| >= value
+| <= value
+
+value -> num
+| identifier
+
+identifier -> pidentifier idtail
+idtail -> [ pidentifier ] | [ num ] | epsilon
