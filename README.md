@@ -6,8 +6,11 @@ This project is implemented by **Oliwier Lechnik** as a part of academic evaluat
 Completion list
 
 [x] Convert grammar to LL(1) EBNF .
+
 [x] Implement AST based on refactored grammar.
+
 [ ] Implement lexer
+
 [ ] Implement parser
 
 ---
