@@ -1,5 +1,5 @@
 This repository contains a compilator for a language described by `grammar.txt`
-This project is implemented **by Oliwier Lechnik** as a part of academic evaluation for the coarse **Języki Formalne i Techniki Translacji**
+This project is implemented by **Oliwier Lechnik** as a part of academic evaluation for the coarse **Języki Formalne i Techniki Translacji**
 
 ---
 
