@@ -27,6 +27,10 @@ data Main
     = Main (Maybe Declarations) [Command]
     deriving (Eq, Show)
 
+data ForDir = To | Downto 
+    deriving (Eq, Show)
+
+
 data Command
     = Assignment Id Expr
     | Proccall Pid [Pid]
@@ -34,8 +38,7 @@ data Command
     | If Condition [Command]
     | While Condition [Command]
     | Repeat [Command] Condition
-    | Uptofor Pid Value Value [Command]
-    | Downfor Pid Value Value [Command]
+    | For Pid Value ForDir Value [Command]
     | Myread Id
     | Mywrite Value
     deriving (Eq, Show)
