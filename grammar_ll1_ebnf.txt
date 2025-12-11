@@ -13,8 +13,7 @@ command -> pidentifier commandidtail ;
 | IF condition THEN commands ENDIF
 | WHILE condition DO commands ENDWHILE
 | REPEAT commands UNTIL condition ;
-| FOR pidentifier FROM value TO value DO commands ENDFOR
-| FOR pidentifier FROM value DOWNTO value DO commands ENDFOR
+| FOR pidentifier FROM value ( TO | DOWNTO ) value DO commands ENDFOR
 | READ identifier ;
 | WRITE value ;
 
