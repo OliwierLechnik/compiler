@@ -31,14 +31,16 @@ lexNum = lexeme L.decimal
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
 
-pidentifier :: Parser Text -- [_a-z]+
+pidentifier :: Parser Pid -- [_a-z]+
 pidentifier = lexeme $ takeWhile1P (Just "pidentifier") isAllowed
     where
         isAllowed c = isLower c || c == '_'
 
 -- Lex Operators
 
-lexCondOp :: Parser (Value -> Value -> Condition) -- lex Condition Operator
+type CondOp = (Value -> Value -> Condition)
+
+lexCondOp :: Parser CondOp -- lex Condition Operator
 lexCondOp = choice
     [ symbol "!=" *> pure NEqual
     , symbol ">=" *> pure GreaterEq
@@ -47,6 +49,8 @@ lexCondOp = choice
     , symbol ">"  *> pure Greater
     , symbol "<"  *> pure Lesser
     ]
+
+type ExprOp = (Value -> Value -> Expr)
 
 lexExprOp :: Parser (Value -> Value -> Expr) -- lex Expr Operator
 lexExprOp = choice

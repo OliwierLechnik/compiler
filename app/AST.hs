@@ -19,11 +19,11 @@ data ProgramAll
     deriving (Eq, Show)
 
 data Procedure 
-    = Procedure Pid [(Maybe Type, Pid)] (Maybe Declarations) [Command]
+    = Procedure Pid [(Maybe Type, Pid)] [Declaration] [Command]
     deriving (Eq, Show)
 
 data Main 
-    = Main (Maybe Declarations) [Command]
+    = Main [Declaration] [Command]
     deriving (Eq, Show)
 
 data ForDir = Upwards | Downwards
@@ -42,8 +42,6 @@ data Command
     | MyRead Id
     | MyWrite Value
     deriving (Eq, Show)
-
-type Declarations = [Declaration]
 
 data Declaration
     = DeclScalar Pid
