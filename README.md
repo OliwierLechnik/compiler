@@ -9,7 +9,7 @@ Completion list
 
 [x] Implement AST based on refactored grammar.
 
-[ ] Implement lexer
+[X] Implement lexer
 
 [ ] Implement parser
 
