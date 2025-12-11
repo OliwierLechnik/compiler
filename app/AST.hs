@@ -15,8 +15,8 @@ data Type
     | Nothingtype
     deriving (Eq, Show)
 
-data Program_all 
-    = Program_all [Procedure] Main
+data ProgramAll 
+    = ProgramAll [Procedure] Main
     deriving (Eq, Show)
 
 data Procedure 
@@ -27,27 +27,28 @@ data Main
     = Main (Maybe Declarations) [Command]
     deriving (Eq, Show)
 
-data ForDir = To | Downto 
+data ForDir = Upwards | Downwards
+            -- TO | DOWNTO
     deriving (Eq, Show)
 
 
 data Command
     = Assignment Id Expr
-    | Proccall Pid [Pid]
-    | Ifelse Condition [Command] [Command]
+    | ProcCall Pid [Pid]
+    | IfElse Condition [Command] [Command]
     | If Condition [Command]
     | While Condition [Command]
     | Repeat [Command] Condition
-    | For Pid Value ForDir Value [Command]
-    | Myread Id
-    | Mywrite Value
+    | ForLoop Pid Value Value ForDir [Command]
+    | MyRead Id
+    | MyWrite Value
     deriving (Eq, Show)
 
 type Declarations = [Declaration]
 
 data Declaration
-    = Declscalar Pid
-    | Declarray Pid IntegerVal IntegerVal
+    = DeclScalar Pid
+    | DeclArray Pid IntegerVal IntegerVal
     deriving (Eq, Show)
 
 data Expr
@@ -61,11 +62,11 @@ data Expr
 
 data Condition
     = Equal Value Value
-    | Nequal Value Value
+    | NEqual Value Value
     | Greater Value Value
     | Lesser Value Value
-    | Greatereq Value Value
-    | Lessereq Value Value
+    | GreaterEq Value Value
+    | LesserEq Value Value
     deriving (Eq, Show)
 
 data Value 

@@ -9,13 +9,14 @@ main -> PROGRAM IS ( declarations | epsilon ) IN commands END
 commands -> command+
 
 command -> pidentifier commandidtail ;
-| IF condition THEN commands ELSE commands ENDIF
-| IF condition THEN commands ENDIF
+| IF condition THEN commands fi
 | WHILE condition DO commands ENDWHILE
 | REPEAT commands UNTIL condition ;
 | FOR pidentifier FROM value ( TO | DOWNTO ) value DO commands ENDFOR
 | READ identifier ;
 | WRITE value ;
+
+fi -> ENDIF | ELSE commands ENDIF
 
 commandidtail -> idtail := expression | ( args )
 
