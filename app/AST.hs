@@ -12,7 +12,6 @@ data Type
     = Ttype 
     | Itype 
     | Otype 
-    | Nothingtype
     deriving (Eq, Show)
 
 data ProgramAll 
@@ -20,7 +19,7 @@ data ProgramAll
     deriving (Eq, Show)
 
 data Procedure 
-    = Procedure Pid [(Type, Pid)] (Maybe Declarations) [Command]
+    = Procedure Pid [(Maybe Type, Pid)] (Maybe Declarations) [Command]
     deriving (Eq, Show)
 
 data Main 
@@ -28,7 +27,7 @@ data Main
     deriving (Eq, Show)
 
 data ForDir = Upwards | Downwards
-            -- TO | DOWNTO
+--            TO      | DOWNTO
     deriving (Eq, Show)
 
 

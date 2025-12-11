@@ -40,34 +40,36 @@ pidentifier = lexeme $ takeWhile1P (Just "pidentifier") isAllowed
 
 lexCondOp :: Parser (Value -> Value -> Condition) -- lex Condition Operator
 lexCondOp = choice
-    [ string "==" *> pure Equal
-    , string "!=" *> pure NEqual
-    , string ">=" *> pure GreaterEq
-    , string "<=" *> pure LesserEq
-    , string ">"  *> pure Greater
-    , string "<"  *> pure Lesser
+    [ symbol "!=" *> pure NEqual
+    , symbol ">=" *> pure GreaterEq
+    , symbol "<=" *> pure LesserEq
+    , symbol "="  *> pure Equal
+    , symbol ">"  *> pure Greater
+    , symbol "<"  *> pure Lesser
     ]
 
 lexExprOp :: Parser (Value -> Value -> Expr) -- lex Expr Operator
 lexExprOp = choice
-    [ string "+" *> pure Add
-    , string "-" *> pure Sub
-    , string "*" *> pure Mul
-    , string "/" *> pure Div
-    , string "%" *> pure Mod
+    [ symbol "+" *> pure Add
+    , symbol "-" *> pure Sub
+    , symbol "*" *> pure Mul
+    , symbol "/" *> pure Div
+    , symbol "%" *> pure Mod
     ]
+
+lexAssignOp :: Parser Text
+lexAssignOp = symbol ":="
 
 -- Lex Keywords
 
 keyword :: Text -> Parser Text
-keyword kw = lexeme (string kw <* notFollowedBy alphaNumChar)
+keyword kw = lexeme (string kw <* notFollowedBy (alphaNumChar <|> char '_'))
 
-lexType :: Parser Type
-lexType = choice
+lexTypeKeyword :: Parser Type
+lexTypeKeyword = choice
     [ keyword "T" *> pure Ttype
     , keyword "I" *> pure Itype
     , keyword "O" *> pure Otype
-    , pure Nothingtype -- ? is that alright? is that how express that if no type token was found to return Nothingtype?
     ]
 
 lexForDir :: Parser ForDir
@@ -78,3 +80,59 @@ lexForDir = choice
 
 -- Miscellaneous keywords
 
+lexDo :: Parser Text
+lexDo = keyword "DO"
+
+lexElse :: Parser Text
+lexElse = keyword "ELSE"
+
+lexEnd :: Parser Text
+lexEnd = keyword "END"
+
+lexEndfor :: Parser Text
+lexEndfor = keyword "ENDFOR"
+
+lexEndif :: Parser Text
+lexEndif = keyword "ENDIF"
+
+lexEndwhile :: Parser Text
+lexEndwhile = keyword "ENDWHILE"
+
+lexFor :: Parser Text
+lexFor = keyword "FOR"
+
+lexFrom :: Parser Text
+lexFrom = keyword "FROM"
+
+lexIf :: Parser Text
+lexIf = keyword "IF"
+
+lexIn :: Parser Text
+lexIn = keyword "IN"
+
+lexIs :: Parser Text
+lexIs = keyword "IS"
+
+lexProcedure :: Parser Text
+lexProcedure = keyword "PROCEDURE"
+
+lexProgram :: Parser Text
+lexProgram = keyword "PROGRAM"
+
+lexRepeat :: Parser Text
+lexRepeat = keyword "REPEAT"
+
+lexThen :: Parser Text
+lexThen = keyword "THEN"
+
+lexUntil :: Parser Text
+lexUntil = keyword "UNTIL"
+
+lexWhile :: Parser Text
+lexWhile = keyword "WHILE"
+
+lexRead :: Parser Text
+lexRead = keyword "READ"
+
+lexWrite :: Parser Text
+lexWrite = keyword "WRITE"
