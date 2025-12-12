@@ -2,6 +2,8 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+module Parser where
+
 import AST
 import Lexer
 

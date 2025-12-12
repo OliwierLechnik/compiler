@@ -19,7 +19,7 @@ type Parser = Parsec Void Text -- will add custom errors later
 sc :: Parser ()
 sc = L.space
     space1
-    empty
+    (L.skipLineComment "#")
     empty
 
 lexeme :: Parser a -> Parser a

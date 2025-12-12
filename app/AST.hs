@@ -30,7 +30,6 @@ data ForDir = Upwards | Downwards
 --            TO      | DOWNTO
     deriving (Eq, Show)
 
-
 data Command
     = Assignment Id Expr
     | ProcCall Pid [Pid]

@@ -48,7 +48,7 @@ extra-doc-files:    README.md
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall
+    ghc-options: -Wall -Werror
 
 executable compiler
     -- Import common warning flags.
@@ -59,6 +59,8 @@ executable compiler
 
     -- Modules included in this executable, other than Main.
     -- other-modules:
+
+    other-modules:    AST, Lexer, Parser, PrettyAST
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

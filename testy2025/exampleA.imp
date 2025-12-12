@@ -1,0 +1,19 @@
+PROGRAM IS
+	n, j, ta[0:24], tb[0:24], tc[0:24]
+IN
+	n:=24;
+	tc[0]:=n;
+	tc[n]:=n-tc[0];
+        j:=tc[0]+1;
+        FOR i FROM tc[0] DOWNTO tc[n] DO
+		ta[i]:=i+1;
+		tb[i]:=j-i;
+	ENDFOR
+        j:=tc[n];
+        FOR i FROM tc[n] TO tc[0] DO
+		tc[i]:=ta[i]*tb[i];
+	ENDFOR
+        FOR i FROM 0 TO n DO
+		WRITE tc[i];
+	ENDFOR
+END
