@@ -1,0 +1,166 @@
+ProgramAll
+  Procedure: de
+    Args:
+      Just Itype m
+      Just Itype n
+      Just Otype x
+      Just Otype y
+      Just Otype z
+    Declarations:
+      DeclScalar: a
+      DeclScalar: b
+      DeclScalar: r
+      DeclScalar: s
+      DeclScalar: reszta
+      DeclScalar: iloraz
+      DeclScalar: rr
+      DeclScalar: ss
+      DeclScalar: tmp
+    Commands:
+      Assignment:
+        Scalar: a
+        Val:
+          Scalar: m
+      Assignment:
+        Scalar: b
+        Val:
+          Scalar: n
+      Assignment:
+        Scalar: x
+        Val:
+          Num: 1
+      Assignment:
+        Scalar: y
+        Val:
+          Num: 0
+      Assignment:
+        Scalar: r
+        Val:
+          Scalar: n
+      Assignment:
+        Scalar: s
+        Sub:
+          Scalar: m
+          Num: 1
+      While:
+        Greater:
+          Scalar: b
+          Num: 0
+        Assignment:
+          Scalar: reszta
+          Mod:
+            Scalar: a
+            Scalar: b
+        Assignment:
+          Scalar: iloraz
+          Div:
+            Scalar: a
+            Scalar: b
+        Assignment:
+          Scalar: a
+          Val:
+            Scalar: b
+        Assignment:
+          Scalar: b
+          Val:
+            Scalar: reszta
+        Assignment:
+          Scalar: rr
+          Val:
+            Scalar: r
+        Assignment:
+          Scalar: tmp
+          Mul:
+            Scalar: iloraz
+            Scalar: r
+        IfElse:
+          Lesser:
+            Scalar: x
+            Scalar: tmp
+          Then:
+            Assignment:
+              Scalar: r
+              Mul:
+                Scalar: n
+                Scalar: iloraz
+          Else:
+            Assignment:
+              Scalar: r
+              Val:
+                Num: 0
+        Assignment:
+          Scalar: r
+          Add:
+            Scalar: r
+            Scalar: x
+        Assignment:
+          Scalar: r
+          Sub:
+            Scalar: r
+            Scalar: tmp
+        Assignment:
+          Scalar: ss
+          Val:
+            Scalar: s
+        Assignment:
+          Scalar: tmp
+          Mul:
+            Scalar: iloraz
+            Scalar: s
+        IfElse:
+          Lesser:
+            Scalar: y
+            Scalar: tmp
+          Then:
+            Assignment:
+              Scalar: s
+              Mul:
+                Scalar: m
+                Scalar: iloraz
+          Else:
+            Assignment:
+              Scalar: s
+              Val:
+                Num: 0
+        Assignment:
+          Scalar: s
+          Add:
+            Scalar: s
+            Scalar: y
+        Assignment:
+          Scalar: s
+          Sub:
+            Scalar: s
+            Scalar: tmp
+        Assignment:
+          Scalar: x
+          Val:
+            Scalar: rr
+        Assignment:
+          Scalar: y
+          Val:
+            Scalar: ss
+      Assignment:
+        Scalar: z
+        Val:
+          Scalar: a
+  Main
+    Declarations:
+      DeclScalar: m
+      DeclScalar: n
+      DeclScalar: x
+      DeclScalar: y
+      DeclScalar: nwd
+    Commands:
+      Read:
+        Scalar: m
+      Read:
+        Scalar: n
+      ProcCall: de(m n x y nwd)
+      Write:
+        Scalar: x
+      Write:
+        Scalar: y
+      Write:
+        Scalar: nwd
+

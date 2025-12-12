@@ -8,12 +8,6 @@ import AST
 import Lexer
 
 import Text.Megaparsec
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
-import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Void
-import Data.Char
 
 parseIdTail :: Parser (Either Pid IntegerVal)
 parseIdTail = do
@@ -166,10 +160,10 @@ parseAssAndCall = do
     where
         parseAss :: Parser (Maybe (Either Pid IntegerVal), Expr)
         parseAss = do
-            tail <- optional parseIdTail
+            mytail <- optional parseIdTail
             _ <- lexAssignOp
             expr <- parseExpr
-            return (tail, expr)
+            return (mytail, expr)
         parseCall :: Parser [Pid]
         parseCall = do 
             _ <- symbol "("
