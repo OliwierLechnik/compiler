@@ -4,9 +4,9 @@
 
 module Main where
 
--- import AST
-import Parser
-import PrettyAST
+import Parser (parseProgramAll)
+import PrettyAST (printAST)
+import Semantics
 
 import qualified Data.Text.IO as TIO
 import qualified System.Environment as SE
@@ -19,5 +19,7 @@ main = do
     file <- TIO.readFile name
     let parseResult = runParser parseProgramAll name file
     case parseResult of 
-        Left err -> putStrLn (errorBundlePretty err)
-        Right ast -> printAST ast
+        Left err -> putStrLn (errorBundlePretty err) >> return ()
+        Right ast -> do
+            print $ analyzeProgram ast
+            printAST ast

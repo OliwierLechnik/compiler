@@ -18,6 +18,9 @@ data ProgramAll
     = ProgramAll [Procedure] Main
     deriving (Eq, Show)
 
+type Pos = Pos Int Int
+    deriving (Eq, Show)
+
 data Procedure 
     = Procedure Pid [(Maybe Type, Pid)] [Declaration] [Command]
     deriving (Eq, Show)

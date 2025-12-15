@@ -27,7 +27,6 @@ parseIdentifier = do
     idtail   <- optional parseIdTail
     return (idCombine idbase idtail)
 
-
 parseValue :: Parser Value
 parseValue = (ValId <$> parseIdentifier) <|> (ValNum <$> lexNum)
 
@@ -172,7 +171,15 @@ parseAssAndCall = do
             return args
 
 parseCommand :: Parser Command
-parseCommand = choice [parseWrite, parseRead, parseForLoop, parseRepeat, parseWhile, parseIf, parseAssAndCall]
+parseCommand = choice
+    [ parseWrite
+    , parseRead
+    , parseForLoop
+    , parseRepeat
+    , parseWhile
+    , parseIf
+    , parseAssAndCall
+    ]
 
 parseCommands :: Parser [Command]
 parseCommands = many parseCommand

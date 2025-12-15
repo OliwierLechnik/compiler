@@ -8,7 +8,6 @@ import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Data.Text (Text)
-import qualified Data.Text as T
 import Data.Void
 import Data.Char
 
