@@ -16,16 +16,17 @@ parseIdTail = do
     _   <- symbol "]"
     return idx
 
-idCombine :: Pid -> Maybe (Either Pid IntegerVal) -> Id
-idCombine idbase Nothing            = Scalar idbase
-idCombine idbase (Just (Left pid))  = ArrayVar idbase pid
-idCombine idbase (Just (Right n))   = ArrayConst idbase n
+idCombine :: AST.Pos -> Pid -> Maybe (Either Pid IntegerVal) -> Id
+idCombine pos idbase Nothing            = Scalar pos idbase
+idCombine pos idbase (Just (Left pid))  = ArrayVar pos idbase pid
+idCombine pos idbase (Just (Right n))   = ArrayConst pos idbase n
 
 parseIdentifier :: Parser Id
 parseIdentifier = do
+    pos <- getSourcePos
     idbase <- pidentifier
     idtail   <- optional parseIdTail
-    return (idCombine idbase idtail)
+    return (idCombine pos idbase idtail)
 
 parseValue :: Parser Value
 parseValue = (ValId <$> parseIdentifier) <|> (ValNum <$> lexNum)
@@ -51,6 +52,7 @@ parseExpr = do
 
 parseDeclaration :: Parser Declaration
 parseDeclaration = do 
+    pos <- getSourcePos
     pid <- pidentifier
     maybeTail <- optional $ do
         _ <- symbol "["
@@ -61,8 +63,8 @@ parseDeclaration = do
         return (num1, num2)
 
     case maybeTail of
-        Just (num1, num2) -> return (DeclArray pid num1 num2)
-        Nothing         -> return (DeclScalar pid)
+        Just (num1, num2) -> return (DeclArray pos pid num1 num2)
+        Nothing         -> return (DeclScalar pos pid)
 
 parseDeclarations :: Parser [Declaration]
 parseDeclarations = parseDeclaration `sepBy` symbol ","
@@ -80,20 +82,23 @@ parseArgsDecl = parseArgDecl `sepBy` symbol ","
 
 parseWrite :: Parser Command
 parseWrite = do
+    pos <- getSourcePos
     _ <- lexWrite
     val <- parseValue
     _ <- symbol ";"
-    return (MyWrite val)
+    return (MyWrite pos val)
 
 parseRead :: Parser Command
 parseRead = do
+    pos <- getSourcePos
     _ <- lexRead
     pid <- parseIdentifier
     _ <- symbol ";"
-    return (MyRead pid)
+    return (MyRead pos pid)
 
 parseForLoop :: Parser Command
 parseForLoop = do
+    pos <- getSourcePos
     _ <- lexFor
     pid <- pidentifier
     _ <- lexFrom
@@ -103,28 +108,32 @@ parseForLoop = do
     _ <- lexDo
     commands <- parseCommands
     _ <- lexEndfor
-    return (ForLoop pid val1 val2 dir commands)
+    return (ForLoop pos pid val1 val2 dir commands)
 
 parseRepeat :: Parser Command
 parseRepeat = do
+    pos <- getSourcePos
     _ <- lexRepeat
     commands <- parseCommands
     _ <- lexUntil
     condition <- parseCondition
     _ <- symbol ";"
-    return (Repeat commands condition)
+    return (Repeat pos commands condition)
 
 parseWhile :: Parser Command
 parseWhile = do
+    pos <- getSourcePos
     _ <- lexWhile
     cond <- parseCondition
     _ <- lexDo
     commands <- parseCommands
     _ <- lexEndwhile
-    return (While cond commands)
+    return (While pos cond commands)
 
 parseIf :: Parser Command
 parseIf = do
+
+    pos <- getSourcePos
     _ <- lexIf
     cond <- parseCondition
     _ <- lexThen
@@ -132,8 +141,8 @@ parseIf = do
     maybeElse <- (Left <$> lexEndif) <|> (Right <$> parseElse)
 
     case maybeElse of
-        Left _ -> return (If cond commands1)
-        Right commands2 -> return(IfElse cond commands1 commands2)
+        Left _ -> return (If pos cond commands1)
+        Right commands2 -> return(IfElse pos cond commands1 commands2)
 
     where
         parseElse :: Parser [Command]
@@ -148,13 +157,15 @@ parseArgs = pidentifier `sepBy` symbol ","
 
 parseAssAndCall :: Parser Command
 parseAssAndCall = do
+
+    pos <- getSourcePos
     pid <- pidentifier
     rest <- (Left <$> parseAss) <|> (Right <$> parseCall)
     _ <- symbol ";"
     
     case rest of
-        Left (idTail, expr) -> return (Assignment (idCombine pid idTail) expr)
-        Right args -> return (ProcCall pid args)
+        Left (idTail, expr) -> return (Assignment pos (idCombine pos pid idTail) expr)
+        Right args -> return (ProcCall pos pid args)
 
     where
         parseAss :: Parser (Maybe (Either Pid IntegerVal), Expr)
@@ -188,6 +199,7 @@ parseCommands = many parseCommand
 
 parseProcedure :: Parser Procedure
 parseProcedure = do
+    pos <- getSourcePos
     _ <- lexProcedure
     name <- pidentifier
     _ <- symbol "("
@@ -198,7 +210,7 @@ parseProcedure = do
     _ <- lexIn
     commands <- parseCommands
     _ <- lexEnd
-    return (Procedure name args decls commands)
+    return (Procedure pos name args decls commands)
 
 parseMain :: Parser Main
 parseMain = do

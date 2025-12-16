@@ -22,7 +22,7 @@ goProgramAll (ProgramAll procs main') lvl =
 
 -- Procedure
 goProcedure :: Procedure -> Int -> String
-goProcedure (Procedure pid args decls cmds) lvl =
+goProcedure (Procedure _ pid args decls cmds) lvl =
     indent lvl ++ "Procedure: " ++ unpack pid ++ "\n" ++
     indent (lvl + 1) ++ "Args:\n" ++ concatMap (\(mty, pid') ->
         indent (lvl + 2) ++ show mty ++ " " ++ unpack pid' ++ "\n") args ++
@@ -38,28 +38,28 @@ goMain (Main decls cmds) lvl =
 
 -- Declaration
 goDeclaration :: Declaration -> Int -> String
-goDeclaration (DeclScalar pid) lvl = indent lvl ++ "DeclScalar: " ++ unpack pid ++ "\n"
-goDeclaration (DeclArray pid start end) lvl = 
+goDeclaration (DeclScalar _ pid) lvl = indent lvl ++ "DeclScalar: " ++ unpack pid ++ "\n"
+goDeclaration (DeclArray _ pid start end) lvl = 
     indent lvl ++ "DeclArray: " ++ unpack pid ++ "[" ++ show start ++ ".." ++ show end ++ "]\n"
 
 -- Commands
 goCommand :: Command -> Int -> String
-goCommand (Assignment ident expr) lvl = indent lvl ++ "Assignment:\n" ++ goId ident (lvl + 1) ++ goExpr expr (lvl + 1)
-goCommand (ProcCall pid args) lvl = indent lvl ++ "ProcCall: " ++ unpack pid ++ "(" ++ unwords (map unpack args) ++ ")\n"
-goCommand (IfElse cond t f) lvl = indent lvl ++ "IfElse:\n" ++ goCondition cond (lvl + 1) ++
+goCommand (Assignment _ ident expr) lvl = indent lvl ++ "Assignment:\n" ++ goId ident (lvl + 1) ++ goExpr expr (lvl + 1)
+goCommand (ProcCall _ pid args) lvl = indent lvl ++ "ProcCall: " ++ unpack pid ++ "(" ++ unwords (map unpack args) ++ ")\n"
+goCommand (IfElse _ cond t f) lvl = indent lvl ++ "IfElse:\n" ++ goCondition cond (lvl + 1) ++
     indent (lvl + 1) ++ "Then:\n" ++ concatMap (\c -> goCommand c (lvl + 2)) t ++
     indent (lvl + 1) ++ "Else:\n" ++ concatMap (\c -> goCommand c (lvl + 2)) f
-goCommand (If cond t) lvl = indent lvl ++ "If:\n" ++ goCondition cond (lvl + 1) ++
+goCommand (If _ cond t) lvl = indent lvl ++ "If:\n" ++ goCondition cond (lvl + 1) ++
     indent (lvl + 1) ++ "Then:\n" ++ concatMap (\c -> goCommand c (lvl + 2)) t
-goCommand (While cond cmds) lvl = indent lvl ++ "While:\n" ++ goCondition cond (lvl + 1) ++
+goCommand (While _ cond cmds) lvl = indent lvl ++ "While:\n" ++ goCondition cond (lvl + 1) ++
     concatMap (\c -> goCommand c (lvl + 1)) cmds
-goCommand (Repeat cmds cond) lvl = indent lvl ++ "Repeat:\n" ++ concatMap (\c -> goCommand c (lvl + 1)) cmds ++
+goCommand (Repeat _ cmds cond) lvl = indent lvl ++ "Repeat:\n" ++ concatMap (\c -> goCommand c (lvl + 1)) cmds ++
     goCondition cond (lvl + 1)
-goCommand (ForLoop pid start end dir cmds) lvl = indent lvl ++ "ForLoop: " ++ unpack pid ++ " " ++ show dir ++ "\n" ++
+goCommand (ForLoop _ pid start end dir cmds) lvl = indent lvl ++ "ForLoop: " ++ unpack pid ++ " " ++ show dir ++ "\n" ++
     indent (lvl + 1) ++ "From: " ++ show start ++ ", To: " ++ show end ++ "\n" ++
     concatMap (\c -> goCommand c (lvl + 1)) cmds
-goCommand (MyRead ident) lvl = indent lvl ++ "Read:\n" ++ goId ident (lvl + 1)
-goCommand (MyWrite val) lvl = indent lvl ++ "Write:\n" ++ goValue val (lvl + 1)
+goCommand (MyRead _ ident) lvl = indent lvl ++ "Read:\n" ++ goId ident (lvl + 1)
+goCommand (MyWrite _ val) lvl = indent lvl ++ "Write:\n" ++ goValue val (lvl + 1)
 
 -- Expr
 goExpr :: Expr -> Int -> String
@@ -86,6 +86,6 @@ goValue (ValId i) lvl = goId i lvl
 
 -- Id
 goId :: Id -> Int -> String
-goId (Scalar pid) lvl = indent lvl ++ "Scalar: " ++ unpack pid ++ "\n"
-goId (ArrayVar pid idx) lvl = indent lvl ++ "ArrayVar: " ++ unpack pid ++ "[" ++ unpack idx ++ "]\n"
-goId (ArrayConst pid n) lvl = indent lvl ++ "ArrayConst: " ++ unpack pid ++ "[" ++ show n ++ "]\n"
+goId (Scalar _ pid) lvl = indent lvl ++ "Scalar: " ++ unpack pid ++ "\n"
+goId (ArrayVar _ pid idx) lvl = indent lvl ++ "ArrayVar: " ++ unpack pid ++ "[" ++ unpack idx ++ "]\n"
+goId (ArrayConst _ pid n) lvl = indent lvl ++ "ArrayConst: " ++ unpack pid ++ "[" ++ show n ++ "]\n"

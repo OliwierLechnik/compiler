@@ -3,6 +3,7 @@
 module AST where
 
 import Data.Text (Text)
+import Text.Megaparsec.Pos (SourcePos)
 
 type Pid = Text
 
@@ -18,11 +19,10 @@ data ProgramAll
     = ProgramAll [Procedure] Main
     deriving (Eq, Show)
 
-type Pos = Pos Int Int
-    deriving (Eq, Show)
+type Pos = SourcePos
 
 data Procedure 
-    = Procedure Pid [(Maybe Type, Pid)] [Declaration] [Command]
+    = Procedure Pos Pid [(Maybe Type, Pid)] [Declaration] [Command]
     deriving (Eq, Show)
 
 data Main 
@@ -34,20 +34,20 @@ data ForDir = Upwards | Downwards
     deriving (Eq, Show)
 
 data Command
-    = Assignment Id Expr
-    | ProcCall Pid [Pid]
-    | IfElse Condition [Command] [Command]
-    | If Condition [Command]
-    | While Condition [Command]
-    | Repeat [Command] Condition
-    | ForLoop Pid Value Value ForDir [Command]
-    | MyRead Id
-    | MyWrite Value
+    = Assignment Pos Id Expr
+    | ProcCall Pos Pid [Pid]
+    | IfElse Pos Condition [Command] [Command]
+    | If Pos Condition [Command]
+    | While Pos Condition [Command]
+    | Repeat Pos [Command] Condition
+    | ForLoop Pos Pid Value Value ForDir [Command]
+    | MyRead Pos Id
+    | MyWrite Pos Value
     deriving (Eq, Show)
 
 data Declaration
-    = DeclScalar Pid
-    | DeclArray Pid IntegerVal IntegerVal
+    = DeclScalar Pos Pid
+    | DeclArray Pos Pid IntegerVal IntegerVal
     deriving (Eq, Show)
 
 data Expr
@@ -74,7 +74,7 @@ data Value
     deriving (Eq, Show)
 
 data Id
-    = Scalar Pid
-    | ArrayVar Pid Pid
-    | ArrayConst Pid IntegerVal
+    = Scalar Pos Pid
+    | ArrayVar Pos Pid Pid
+    | ArrayConst Pos Pid IntegerVal
     deriving (Eq, Show)

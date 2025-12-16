@@ -20,6 +20,16 @@
   (major1) == 4 && (major2) <  20 || \
   (major1) == 4 && (major2) == 20 && (minor) <= 0)
 #endif /* MIN_VERSION_base */
+/* package containers-0.7 */
+#ifndef VERSION_containers
+#define VERSION_containers "0.7"
+#endif /* VERSION_containers */
+#ifndef MIN_VERSION_containers
+#define MIN_VERSION_containers(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  7 || \
+  (major1) == 0 && (major2) == 7 && (minor) <= 0)
+#endif /* MIN_VERSION_containers */
 /* package megaparsec-9.7.0 */
 #ifndef VERSION_megaparsec
 #define VERSION_megaparsec "9.7.0"
@@ -30,6 +40,16 @@
   (major1) == 9 && (major2) <  7 || \
   (major1) == 9 && (major2) == 7 && (minor) <= 0)
 #endif /* MIN_VERSION_megaparsec */
+/* package mtl-2.3.1 */
+#ifndef VERSION_mtl
+#define VERSION_mtl "2.3.1"
+#endif /* VERSION_mtl */
+#ifndef MIN_VERSION_mtl
+#define MIN_VERSION_mtl(major1,major2,minor) (\
+  (major1) <  2 || \
+  (major1) == 2 && (major2) <  3 || \
+  (major1) == 2 && (major2) == 3 && (minor) <= 1)
+#endif /* MIN_VERSION_mtl */
 /* package parser-combinators-1.3.0 */
 #ifndef VERSION_parser_combinators
 #define VERSION_parser_combinators "1.3.0"

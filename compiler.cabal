@@ -60,13 +60,13 @@ executable compiler
     -- Modules included in this executable, other than Main.
     -- other-modules:
 
-    other-modules:    AST, Lexer, Parser, PrettyAST
+    other-modules:    AST, Lexer, Parser, PrettyAST, Semantics, SymbolTable
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base, megaparsec, parser-combinators, text
+    build-depends:    base, megaparsec, parser-combinators, text, containers, mtl
 
     -- Directories containing source files.
     hs-source-dirs:   app

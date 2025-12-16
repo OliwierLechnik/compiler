@@ -4,6 +4,9 @@ module SymbolTable where
 
 import AST (Type, Pid)
 
+data ArrRange = ArrRange Integer Integer
+    deriving (Eq, Show)
+
 data VarInfo 
     = InfoScalar 
         { memOffset :: Integer
@@ -12,8 +15,7 @@ data VarInfo
         }
     | InfoArray 
         { memOffset :: Integer    -- Start memory address
-        , rangeBegin :: Integer
-        , rangeEnd   :: Integer
+        , range :: Maybe ArrRange
         }
     deriving (Eq, Show)
 
