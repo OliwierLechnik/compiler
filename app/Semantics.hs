@@ -80,11 +80,12 @@ analyzeCommand (ForLoop pos iterator _ _ _ body) scope = do
     let iterInfo = EntryVar $ InfoScalar addr True False
     let newScope = Map.insert iterator iterInfo scope
     mapM_ (\c -> analyzeCommand c newScope) body
+    return scope
 -- analyzeCommand (MyRead pos id) = do
 -- analyzeCommand (MyWrite pos val) = do
 
 analyzeCommand _ _ = do
-    return ()
+    return Map.empty
 
 analyzeProcedure :: Procedure -> Scope -> State GlobalState Scope
 analyzeProcedure (Procedure pos name args decl commands) scope = do
