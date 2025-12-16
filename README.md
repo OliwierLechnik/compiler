@@ -11,7 +11,11 @@ Completion list
 
 [X] Implement lexer
 
-[ ] Implement parser
+[X] Implement parser
+
+[ ] Implement semantic analysis for: redeclaration, variable not in scope, wrong usage of variable, initialisation checks, immutability checks etc
+
+[ ] Implement translation module for commands and expresions
 
 ---
 
