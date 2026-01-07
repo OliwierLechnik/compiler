@@ -45,6 +45,9 @@ printError (ErrorProduceNotInScope pos pid) =
 printError (ErrorVariableNotInScope pos pid) =
     sourcePosPretty pos ++ " -> Variable `" ++ T.unpack pid ++ "` is not in scope"
 
+printError (ErrorInvalidArguments pos pid) =
+    sourcePosPretty pos ++ " -> Invalid arguments for procedure `" ++ T.unpack pid ++ "`"
+
 main :: IO ()
 main = do
     [name] <- SE.getArgs
@@ -54,7 +57,6 @@ main = do
         Left err -> putStrLn (errorBundlePretty err) >> return ()
         Right ast -> do
             let (GlobalState _ e) = analyzeProgram ast
-            case (reverse e) of
-                [] -> printAST ast
-                x -> mapM_ (putStrLn . makeRed . printError) x
+            printAST ast
+            mapM_ (putStrLn . makeRed . printError) e
             

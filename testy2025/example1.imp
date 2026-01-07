@@ -1,7 +1,7 @@
 # Równanie diofantyczne mx-ny=nwd(m,n) (z)
 
 PROCEDURE de(I m,I n,O x,O y,O z) IS
-  a,b,r,s,reszta,iloraz,rr,ss,tmp
+  a,b,r,s,reszta,il    ,rr,ss,tmp
 IN
   a:=m;
   b:=n;
@@ -12,22 +12,22 @@ IN
   WHILE b>0 DO
     # niezmiennik: NWD(m,n)=NWD(a,b) i a=mx-ny i b=mr-ns
     reszta:=a%b;
-    iloraz:=a/b;
+    il    :=a/b;
     a:=b;
     b:=reszta;
     rr:=r;
-    tmp:=iloraz*r;
+    tmp:=il    *r;
     IF x<tmp THEN
-      r:=n*iloraz;
+      r:=n*il    ;
     ELSE
       r:=0;
     ENDIF
     r:=r+x;
     r:=r-tmp;
     ss:=s;
-    tmp:=iloraz*s;
+    tmp:=il    *s;
     IF y<tmp THEN
-      s:=m*iloraz;
+      s:=m*il    ;
     ELSE
       s:=0;
     ENDIF

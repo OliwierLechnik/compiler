@@ -18,7 +18,7 @@ command -> pidentifier commandidtail ;
 
 fi -> ENDIF | ELSE commands ENDIF
 
-commandidtail -> idtail := expression | ( args )
+commandidtail -> idtail := Expr | ( args )
 
 proc_head -> pidentifier ( args_decl )
 
@@ -33,7 +33,7 @@ type -> T | I | O | epsilon
 
 args -> pidentifier (, pidentifier)*
 
-expression -> value exptail
+Expr -> value exptail
 exptail -> + value
 | - value
 | * value

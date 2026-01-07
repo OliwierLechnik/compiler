@@ -1,0 +1,13 @@
+READ
+SWP b
+RST a
+ADD b
+SHR b
+SHL b
+SUB b
+WRITE
+SHR b
+RST a
+ADD b
+JPOS 4
+HALT

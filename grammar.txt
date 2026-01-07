@@ -20,7 +20,7 @@ command -> identifier commandidtail ;
 | READ identifier ;
 | WRITE value ;
 
-commandidtail -> := expression | ( args )
+commandidtail -> := Expr | ( args )
 
 proc_head -> pidentifier ( args_decl )
 
@@ -37,7 +37,7 @@ type -> T | I | O |
 args -> args , pidentifier
 | pidentifier
 
-expression -> value
+Expr -> value
 | value + value
 | value - value
 | value * value

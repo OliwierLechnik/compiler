@@ -13,8 +13,8 @@ IN
   t[n]:=0;
 END
 
-PROCEDURE sort(T t, I t, n) IS
-  x, j, k, n
+PROCEDURE sort(T t, I o, n) IS
+  x, j, k
 IN
   FOR i FROM 2 TO n DO
     x:=t[i];

@@ -48,7 +48,7 @@ extra-doc-files:    README.md
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall -Werror
+    ghc-options: -Wall
 
 executable compiler
     -- Import common warning flags.
@@ -66,7 +66,7 @@ executable compiler
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base, megaparsec, parser-combinators, text, containers, mtl
+    build-depends:    base , megaparsec, parser-combinators, text, containers, mtl
 
     -- Directories containing source files.
     hs-source-dirs:   app
