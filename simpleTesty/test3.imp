@@ -1,0 +1,22 @@
+PROCEDURE swp(a, b) IS
+    t
+IN
+    t := a;
+    a := b;
+    b := t;
+END
+
+PROCEDURE foo(a, b) IS
+IN
+    swp(b, a);
+END
+
+PROGRAM IS
+   a,b,c,d
+IN
+   READ a;
+   READ b;
+   swp(a, b);
+   WRITE a;
+   WRITE b;
+END

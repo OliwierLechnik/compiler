@@ -1,0 +1,8 @@
+PROGRAM IS
+  foo[0:1000], t[1:23], n
+IN
+  n := 23;
+  FOR i FROM 1 TO n DO
+    t[i] := i;
+  ENDFOR
+END

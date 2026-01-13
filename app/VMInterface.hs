@@ -15,6 +15,7 @@ data Register
 
 type Address = Integer
 
+-- k is instruction pointer
 data VMCommand ------------------------------------------------------------------------------
     = READ              --   | pobraną liczbę zapisuje w rejestrze `RegA` | k ← k + 1 | 100 |
     | WRITE             --   | wyświetla zawartość rejestru `RegA`        | k ← k + 1 | 100 |

@@ -60,7 +60,7 @@ executable compiler
     -- Modules included in this executable, other than Main.
     -- other-modules:
 
-    other-modules:    AST, Lexer, Parser, PrettyAST, Semantics, SymbolTable
+    other-modules:    AST, Lexer, Parser, PrettyAST, Semantics, SymbolTable, CodeGen, GraphExporter
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

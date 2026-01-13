@@ -1,0 +1,12 @@
+PROGRAM IS
+  m,n, max
+IN
+  READ m;
+  READ n;
+  IF m>n THEN
+    max := m*2;
+  ELSE
+    max := n*3;
+  ENDIF
+  WRITE max;
+END

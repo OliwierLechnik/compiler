@@ -13,6 +13,8 @@ import qualified System.Environment as SE
 import qualified Data.Text as T
 
 import Text.Megaparsec
+import CodeGen
+import GraphExporter
 
 makeRed :: String -> String
 makeRed s = "\ESC[31m" ++ s ++ "\ESC[0m"
@@ -57,6 +59,9 @@ main = do
         Left err -> putStrLn (errorBundlePretty err) >> return ()
         Right ast -> do
             let (GlobalState _ e) = analyzeProgram ast
+            print file
             printAST ast
+            let graph = genProgram ast
+            saveGraph "cfg.json" graph
             mapM_ (putStrLn . makeRed . printError) e
             

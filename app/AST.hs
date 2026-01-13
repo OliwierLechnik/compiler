@@ -47,7 +47,7 @@ data Command
 
 data Declaration
     = DeclScalar Pos Pid
-    | DeclArray Pos Pid IntegerVal IntegerVal
+    | DeclArray Pos Pid IntegerVal IntegerVal -- pos in code, id, start idx, end idx
     deriving (Eq, Show)
 
 data Expr

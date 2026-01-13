@@ -1,0 +1,17 @@
+PROCEDURE swp(a, b) IS
+    t
+IN
+    t := a;
+    a := b;
+    b := t;
+END
+
+PROGRAM IS
+   a, b
+IN
+   READ a;
+   READ b;
+   swp(a, b);
+   WRITE a;
+   WRITE b;
+END

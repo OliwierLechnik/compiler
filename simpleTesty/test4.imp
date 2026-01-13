@@ -1,0 +1,22 @@
+PROCEDURE swp(x, y) IS
+    t
+IN
+    t := x;
+    x := y;
+    y := t;
+END
+
+PROGRAM IS
+   a, b, c, d
+IN
+   READ a;
+   READ b;
+   READ c;
+   READ d;
+   swp(a, b);
+   swp(c, d);
+   WRITE a;
+   WRITE b;
+   WRITE c;
+   WRITE d;
+END
