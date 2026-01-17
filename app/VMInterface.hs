@@ -44,6 +44,42 @@ data VMCommand -----------------------------------------------------------------
     | HALT              --   | zatrzymaj program                          |           |   0 |
     deriving (Eq, Show) ---------------------------------------------------------------------
 
+exportProgram :: [VMCommand] -> String
+exportProgram cmds = unlines $ fmap printCmd cmds
+  where
+    showReg :: Register -> String
+    showReg RegA = "a"
+    showReg RegB = "b"
+    showReg RegC = "c"
+    showReg RegD = "d"
+    showReg RegE = "e"
+    showReg RegF = "f"
+    showReg RegG = "g"
+    showReg RegH = "h"
+
+    printCmd :: VMCommand -> String
+    printCmd READ          = "READ"
+    printCmd WRITE         = "WRITE"
+    printCmd (LOAD addr)   = "LOAD "  ++ show addr
+    printCmd (STORE addr)  = "STORE " ++ show addr
+    printCmd (RLOAD reg)   = "RLOAD " ++ showReg reg
+    printCmd (RSTORE reg)  = "RSTORE "++ showReg reg
+    printCmd (ADD reg)     = "ADD "   ++ showReg reg
+    printCmd (SUB reg)     = "SUB "   ++ showReg reg
+    printCmd (SWP reg)     = "SWP "   ++ showReg reg
+    printCmd (RST reg)     = "RST "   ++ showReg reg
+    printCmd (INC reg)     = "INC "   ++ showReg reg
+    printCmd (DEC reg)     = "DEC "   ++ showReg reg
+    printCmd (SHL reg)     = "SHL "   ++ showReg reg
+    printCmd (SHR reg)     = "SHR "   ++ showReg reg
+    printCmd (JUMP addr)   = "JUMP "  ++ show addr
+    printCmd (JPOS addr)   = "JPOS "  ++ show addr
+    printCmd (JZERO addr)  = "JZERO " ++ show addr
+    printCmd (CALL addr)   = "CALL "  ++ show addr
+    printCmd RTRN          = "RTRN"
+    printCmd HALT          = "HALT"
+
+
 vmCmdCost :: VMCommand -> Integer
 vmCmdCost READ        = 100
 vmCmdCost WRITE       = 100

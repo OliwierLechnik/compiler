@@ -10,7 +10,7 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.List (nub)
+import Data.List (intercalate, nub)
 import Control.Monad (forM, forM_, filterM)
 
 import AST
@@ -24,7 +24,8 @@ import qualified VMInterface as VM
 data VarLoc
     = LocReg              
     | LocArray VM.Address Integer 
-    | LocRef   VM.Address 
+    | LocRef   VReg 
+    | LocArrayRef VReg VReg -- FATPTR -- (Base Pointer VReg, Start Index VReg)
     deriving (Show, Eq)
 
 type SymTable = Map Pid VarLoc
@@ -33,6 +34,7 @@ type VarEnv = Map Pid VReg
 data CodegenState = CodegenState
     { currentBlockInsns :: [Middle]      
     , currentBlockPhis  :: [Phi]         
+    , currentBlockArgs  :: [VReg]        
     , finishedBlocks    :: Map Label Block
     , currentLabel      :: Label         
     , labelCount        :: Int           
@@ -40,8 +42,6 @@ data CodegenState = CodegenState
     , freeMem           :: VM.Address    
     , symTable          :: SymTable
     , varEnv            :: VarEnv
-    , procArgMap        :: Map (Pid, Int) VM.Address 
-    , vregMap :: Map Integer Text -- Add this
     }
 
 type Codegen a = State CodegenState a
@@ -50,6 +50,7 @@ initialState :: CodegenState
 initialState = CodegenState
     { currentBlockInsns = []
     , currentBlockPhis  = []
+    , currentBlockArgs  = [] 
     , finishedBlocks    = Map.empty
     , currentLabel      = "entry"
     , labelCount        = 0
@@ -57,8 +58,6 @@ initialState = CodegenState
     , freeMem           = 0
     , symTable          = Map.empty
     , varEnv            = Map.empty
-    , procArgMap        = Map.empty
-    , vregMap           = Map.empty
     }
 
 freshLabel :: Text -> Codegen Label
@@ -90,6 +89,7 @@ terminate term nextLabel = do
     s <- get
     let blk = Block 
             { blockLabel = currentLabel s
+            , blockArgs  = currentBlockArgs s 
             , blockPhis  = reverse (currentBlockPhis s) 
             , blockInsns = reverse (currentBlockInsns s)
             , blockTerm  = term 
@@ -99,6 +99,7 @@ terminate term nextLabel = do
         , currentLabel   = nextLabel
         , currentBlockInsns = [] 
         , currentBlockPhis  = [] 
+        , currentBlockArgs  = [] 
         }
 
 startBlock :: Label -> Codegen ()
@@ -106,6 +107,7 @@ startBlock lbl = modify $ \s -> s
     { currentLabel = lbl
     , currentBlockInsns = []
     , currentBlockPhis = [] 
+    , currentBlockArgs = [] 
     }
 
 updateBlock :: Label -> (Block -> Block) -> Codegen ()
@@ -120,13 +122,8 @@ checkVar pid = do
     syms <- gets symTable
     return $ Map.member pid syms
 
-recordVReg :: VReg -> Pid -> Codegen ()
-recordVReg (VReg id) name = 
-    modify $ \s -> s { vregMap = Map.insert id name (vregMap s) }
-
 writeVar :: Pid -> VReg -> Codegen ()
 writeVar pid val = do
-    recordVReg val pid
     exists <- checkVar pid
     if not exists then do
         addVar pid LocReg
@@ -135,10 +132,9 @@ writeVar pid val = do
         loc <- getVarLoc pid
         case loc of
             LocReg -> modify $ \s -> s { varEnv = Map.insert pid val (varEnv s) }
-            LocRef addr -> do
-                ptrReg <- freshVReg
-                emit $ Load ptrReg addr
-                emit $ StoreIndirect ptrReg (OpReg val) 
+            LocRef ptrReg -> do 
+                emit $ StoreIndirect ptrReg (OpReg val)
+            LocArrayRef baseReg startReg -> error $ "Cannot write to whole array " ++ show pid ++ " as scalar"
             LocArray _ _ -> error $ "Cannot write to array " ++ show pid
 
 readVar :: Pid -> Codegen Operand
@@ -150,12 +146,11 @@ readVar pid = do
             case Map.lookup pid env of
                 Just r -> return $ OpReg r
                 Nothing -> return $ OpImm 0
-        LocRef addr -> do
-            ptrReg <- freshVReg
-            emit $ Load ptrReg addr
+        LocRef ptrReg -> do 
             valReg <- freshVReg
             emit $ LoadIndirect valReg ptrReg
             return $ OpReg valReg
+        LocArrayRef _ _ -> error "Cannot read array as scalar"
         LocArray _ _ -> error "Cannot read array as scalar"
 
 getVarLoc :: Pid -> Codegen VarLoc
@@ -179,13 +174,6 @@ getEnvVal pid env = case Map.lookup pid env of
     Just r -> return $ OpReg r
     Nothing -> return $ OpImm 0
 
-getArgAddr :: Pid -> Int -> Codegen VM.Address
-getArgAddr pid idx = do
-    m <- gets procArgMap
-    case Map.lookup (pid, idx) m of
-        Just addr -> return addr
-        Nothing -> error $ "Argument " ++ show idx ++ " of proc " ++ show pid ++ " not found"
-
 -- ===========================================================================
 -- Code Generation
 -- ===========================================================================
@@ -195,27 +183,16 @@ genProgram (ProgramAll procs mainBlock) =
     let finalState = execState (genAll procs mainBlock) initialState
         lastBlk = Block 
             { blockLabel = currentLabel finalState
+            , blockArgs  = currentBlockArgs finalState 
             , blockPhis  = reverse (currentBlockPhis finalState)
             , blockInsns = reverse (currentBlockInsns finalState)
             , blockTerm  = Halt 
             }
         allBlocks = Map.insert (blockLabel lastBlk) lastBlk (finishedBlocks finalState)
-    in ProgramIR allBlocks (vregMap finalState)
-
-preAllocProcs :: [Procedure] -> Codegen ()
-preAllocProcs procs = do
-    forM_ procs $ \(Procedure _ pid args _ _) -> do
-        zipWithM_ (\idx _ -> do
-            addr <- allocMem 1
-            modify $ \s -> s { procArgMap = Map.insert (pid, idx) addr (procArgMap s) }
-            ) [0..] args
-  where
-    zipWithM_ f xs ys = sequence_ (zipWith f xs ys)
+    in ProgramIR allBlocks
 
 genAll :: [Procedure] -> Main -> Codegen ()
 genAll procs (Main decls cmds) = do
-    preAllocProcs procs
-
     mainLabel <- freshLabel "main"
     terminate (Jump mainLabel) "temp_ignore_me"
     
@@ -235,26 +212,38 @@ genProcedure (Procedure _ pid args decls cmds) = do
     let procLabel = "proc_" <> pid
     startBlock procLabel 
 
-    -- 1. Prologue
     retAddrReg <- freshVReg
     emit $ StoreRetAddr retAddrReg 
     
-    -- 2. Declarations & Args
-    zipWithM_ (\idx (_, argName) -> do
-        addr <- getArgAddr pid idx
-        addVar argName (LocRef addr)
-        ) [0..] args
-        
+    -- FATPTR -- Updated Argument Handling
+    argRegs <- forM args $ \(mType, argName) -> do
+        case mType of
+            Just Ttype -> do
+                -- Array: Consumes 2 VRegs (Base, Start)
+                baseReg <- freshVReg
+                startReg <- freshVReg
+                addVar argName (LocArrayRef baseReg startReg)
+                return [baseReg, startReg]
+            _ -> do
+                -- Scalar: Consumes 1 VReg (Pointer)
+                argPtrReg <- freshVReg
+                addVar argName (LocRef argPtrReg)
+                return [argPtrReg]
+    
+    -- Record flattened list of args for block header
+    modify $ \s -> s { currentBlockArgs = concat argRegs }
+
+    let showVReg (VReg n) = "v" ++ show n
+    let argStr = intercalate ", " (map showVReg (concat argRegs))
+    emit $ Comment $ "Args: " <> T.pack argStr
+
     forM_ decls genDeclaration
     forM_ cmds genCommand
     
-    -- 3. Epilogue
     emit $ LoadRetAddr retAddrReg
     terminate Return "unreachable"
     
     modify $ \s -> s { symTable = oldSyms, varEnv = oldEnv }
-  where
-    zipWithM_ f xs ys = sequence_ (zipWith f xs ys)
 
 genDeclaration :: Declaration -> Codegen ()
 genDeclaration (DeclScalar _ pid) = addVar pid LocReg
@@ -296,12 +285,10 @@ genAddr :: Id -> Codegen (Operand, Bool)
 genAddr (Scalar _ pid) = do
     loc <- getVarLoc pid
     case loc of
-        LocRef paramAddr -> do
-            ptrReg <- freshVReg
-            emit $ Load ptrReg paramAddr
-            return (OpReg ptrReg, True)
-        LocReg -> error "Internal error: genAddr called on Register Scalar (should use writeVar/readVar)"
-        LocArray addr _ -> return (OpImm (fromIntegral addr), False) -- If using array name as scalar
+        LocRef ptrReg -> return (OpReg ptrReg, True)
+        LocReg -> error "Internal error: genAddr called on Register Scalar"
+        LocArray addr _ -> return (OpImm (fromIntegral addr), False) 
+        LocArrayRef _ _ -> error "Internal error: Used array as scalar"
 
 genAddr (ArrayConst _ pid idx) = do
     loc <- getVarLoc pid
@@ -309,11 +296,14 @@ genAddr (ArrayConst _ pid idx) = do
         LocArray base start -> do
             let offset = idx - start
             return (OpImm (fromIntegral (base + offset)), False)
-        LocRef paramAddr -> do
-             baseReg <- freshVReg
-             emit $ Load baseReg paramAddr
+        LocRef ptrReg -> error "Cannot access LocRef as array (Type mismatch)"
+        LocArrayRef baseReg startReg -> do -- FATPTR -- Const index on passed array
              finalAddr <- freshVReg
-             emit $ Compute OpAdd finalAddr (OpReg baseReg) (OpImm idx)
+             -- offset = idx - startReg
+             offReg <- freshVReg
+             emit $ Compute OpSub offReg (OpImm idx) (OpReg startReg)
+             -- addr = base + offset
+             emit $ Compute OpAdd finalAddr (OpReg baseReg) (OpReg offReg)
              return (OpReg finalAddr, True)
         _ -> error "Scalar/Array mismatch"
 
@@ -327,12 +317,15 @@ genAddr (ArrayVar _ pid idxPid) = do
             emit $ Compute OpSub r1 idxVal (OpImm start)
             emit $ Compute OpAdd finalReg (OpReg r1) (OpImm (fromIntegral base))
             return (OpReg finalReg, True)
-        LocRef paramAddr -> do
-            baseReg <- freshVReg
-            emit $ Load baseReg paramAddr
+        LocArrayRef baseReg startReg -> do -- FATPTR -- Dynamic index on passed array
             finalReg <- freshVReg
-            emit $ Compute OpAdd finalReg (OpReg baseReg) idxVal
+            r1 <- freshVReg
+            -- r1 = idx - start
+            emit $ Compute OpSub r1 idxVal (OpReg startReg)
+            -- final = base + r1
+            emit $ Compute OpAdd finalReg (OpReg baseReg) (OpReg r1)
             return (OpReg finalReg, True)
+        LocRef ptrReg -> error "Used scalar ref as array"
         _ -> error "Type mismatch"
 
 genCommand :: Command -> Codegen ()
@@ -369,42 +362,47 @@ genCommand (MyWrite _ val) = do
 genCommand (ProcCall _ name args) = do
     let label = "proc_" <> name
     
-    copyBackList <- zipWithM (\argPid idx -> do
-        argSlotAddr <- getArgAddr name idx
+    -- FATPTR -- Push 2 operands for Arrays, 1 for Scalars
+    -- Result is a flattened list of operands [base1, start1, ptr2, ...]
+    -- And a copyBack list for scalars.
+    
+    processedArgs <- forM args $ \argPid -> do
         loc <- getVarLoc argPid
         case loc of
             LocReg -> do
+                -- Scalar Value -> Spill -> Pass Ptr
                 val <- readVar argPid
                 tmpAddr <- allocMem 1
                 case val of
                     OpReg r -> emit $ Store tmpAddr (OpReg r)
                     OpImm i -> emit $ Store tmpAddr (OpImm i)
-                ptrReg <- freshVReg
-                emit $ Move ptrReg (OpImm (fromIntegral tmpAddr))
-                emit $ Store argSlotAddr (OpReg ptrReg)
-                return $ Just (argPid, tmpAddr)
+                return ([OpImm (fromIntegral tmpAddr)], Just (argPid, tmpAddr))
+                
             LocArray base start -> do
-                ptrReg <- freshVReg
-                emit $ Move ptrReg (OpImm (fromIntegral base))
-                emit $ Store argSlotAddr (OpReg ptrReg)
-                return Nothing 
-            LocRef refAddr -> do
-                ptrReg <- freshVReg
-                emit $ Load ptrReg refAddr
-                emit $ Store argSlotAddr (OpReg ptrReg)
-                return Nothing
-        ) args [0..]
-            
-    emit $ Call label
-    
-    forM_ copyBackList $ \m -> case m of
+                -- Array Global -> Pass Base, Pass Start
+                return ([OpImm (fromIntegral base), OpImm start], Nothing)
+                
+            LocRef ptrReg -> do
+                -- Scalar Ref -> Pass Ptr
+                return ([OpReg ptrReg], Nothing)
+                
+            LocArrayRef baseReg startReg -> do
+                -- Array Ref -> Pass Base, Pass Start
+                return ([OpReg baseReg, OpReg startReg], Nothing)
+
+    let operands = concatMap fst processedArgs
+    let copyBacks = map snd processedArgs
+
+    emit $ Call label operands
+
+    forM_ copyBacks $ \cb -> case cb of
         Just (pid, addr) -> do
             newVal <- freshVReg
             emit $ Load newVal addr
             writeVar pid newVal
         Nothing -> return ()
-  where
-    zipWithM f xs ys = sequence (zipWith f xs ys)
+
+-- ... (Control Flow Unchanged) ...
 
 genCommand (If _ cond cmds) = do
     entryLabel <- gets currentLabel
@@ -493,16 +491,31 @@ genCommand (Repeat _ cmds cond) = do
             in blk { blockPhis = map updatePhi (blockPhis blk) }
 
 genCommand (ForLoop _ var startVal endVal dir cmds) = do
+    -- 1. [PRE-HEADER] Setup Start Value
     startOp <- genValue startVal
     startReg <- freshVReg
     emit $ Move startReg startOp
     writeVar var startReg
+    
+    -- 2. [PRE-HEADER] Setup End Value (MOVED HERE)
+    -- We generate it once, before entering the loop. 
+    -- We move it to a fresh register to ensure it is immutable/stable.
+    rawEndOp <- genValue endVal
+    endReg <- freshVReg
+    emit $ Move endReg rawEndOp
+    let endOp = OpReg endReg
+
+    -- 3. Prepare Loop Entry
     entryLabel <- gets currentLabel
     entryEnv   <- gets varEnv
     loopLabel <- freshLabel "for_loop"
     bodyLabel <- freshLabel "for_body"
     endLabel  <- freshLabel "for_end"
+    
+    -- Jump to the Loop Header
     terminate (Jump loopLabel) loopLabel
+    
+    -- 4. [LOOP HEADER] Phi Nodes
     let modVars = nub (var : scanModified cmds)
     ssaVars <- onlySSA modVars
     loopPhis <- forM ssaVars $ \pid -> do
@@ -511,20 +524,38 @@ genCommand (ForLoop _ var startVal endVal dir cmds) = do
         emitPhi $ Phi valPhi [(entryLabel, valEntry)]
         writeVar pid valPhi
         return (pid, valPhi)
+        
+    -- 5. [LOOP HEADER] Condition Check
     currVarOp <- readVar var 
     currVarVal <- case currVarOp of { OpReg r -> return r; _ -> error "Loop var not reg" }
-    endOp <- genValue endVal
-    let branchTerm = case dir of { Upwards -> Branch Gt currVarVal endOp endLabel bodyLabel; Downwards -> Branch Lt currVarVal endOp endLabel bodyLabel }
+    
+    -- We use the pre-calculated 'endOp' here
+    let branchTerm = case dir of 
+            Upwards   -> Branch Gt currVarVal endOp endLabel bodyLabel
+            Downwards -> Branch Lt currVarVal endOp endLabel bodyLabel
+            
     terminate branchTerm bodyLabel
+    
+    -- 6. [LOOP BODY]
     forM_ cmds genCommand
+    
+    -- 7. [LOOP BODY] Increment/Decrement Loop Variable
     valToMod <- readVar var
     newVal <- freshVReg
     let op = case dir of { Upwards -> OpAdd; Downwards -> OpSub }
-    case valToMod of { OpReg r -> emit $ Compute op newVal (OpReg r) (OpImm 1); OpImm i -> emit $ Compute op newVal (OpImm i) (OpImm 1) }
+    
+    case valToMod of 
+        OpReg r -> emit $ Compute op newVal (OpReg r) (OpImm 1)
+        OpImm i -> emit $ Compute op newVal (OpImm i) (OpImm 1)
+        
     writeVar var newVal
+    
+    -- 8. [LOOP LATCH] Jump back to header
     bodyEndLabel <- gets currentLabel
     bodyEndEnv   <- gets varEnv
     terminate (Jump loopLabel) endLabel
+    
+    -- 9. Backpatching Phis
     forM_ loopPhis $ \(pid, valPhi) -> do
         valBack <- getEnvVal pid bodyEndEnv
         updateBlock loopLabel $ \blk ->
@@ -567,6 +598,8 @@ mergeEnvironments labelTrue envTrue labelFalse envFalse = do
 
 scanModified :: [Command] -> [Pid]
 scanModified [] = []
+scanModified (ProcCall _ _ args : cs) =
+    args ++ scanModified cs
 scanModified (c:cs) = nub $ case c of
     Assignment _ (Scalar _ pid) _ -> pid : scanModified cs
     MyRead _ (Scalar _ pid)       -> pid : scanModified cs
@@ -576,3 +609,4 @@ scanModified (c:cs) = nub $ case c of
     Repeat _ c1 _                 -> scanModified c1 ++ scanModified cs
     ForLoop _ pid _ _ _ c1        -> pid : scanModified c1 ++ scanModified cs
     _                             -> scanModified cs
+    -- ProcCall _ _ (args : cs)        -> args ++ scanModified cs

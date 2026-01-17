@@ -15,6 +15,15 @@ import qualified Data.Text as T
 import Text.Megaparsec
 import CodeGen
 import GraphExporter
+import PhiElimination
+import Linearization
+import PseudoPrinter
+import RegisterAllocator
+import LabelResolver
+import VMInterface (exportProgram)
+import Control.Monad (when)
+
+import System.Exit (exitFailure)
 
 makeRed :: String -> String
 makeRed s = "\ESC[31m" ++ s ++ "\ESC[0m"
@@ -52,16 +61,48 @@ printError (ErrorInvalidArguments pos pid) =
 
 main :: IO ()
 main = do
-    [name] <- SE.getArgs
+    args <- SE.getArgs
+    case args of
+        [name, out] ->
+            compileFile name out False
+
+        [name, out, "cfg"] ->
+            compileFile name out True
+
+        _ -> do
+            putStrLn "Usage: compiler <input.imp> <output.mr> [cfg]"
+            exitFailure
+
+
+compileFile :: FilePath -> FilePath -> Bool -> IO ()
+compileFile name out dumpCFG = do
     file <- TIO.readFile name
-    let parseResult = runParser parseProgramAll name file
-    case parseResult of 
-        Left err -> putStrLn (errorBundlePretty err) >> return ()
+    case runParser parseProgramAll name file of
+        Left err ->
+            putStrLn (errorBundlePretty err) >> exitFailure
+
         Right ast -> do
-            let (GlobalState _ e) = analyzeProgram ast
-            print file
-            printAST ast
+            let (GlobalState _ errors) = analyzeProgram ast
+            mapM_ (putStrLn . makeRed . printError) errors
+
             let graph = genProgram ast
-            saveGraph "cfg.json" graph
-            mapM_ (putStrLn . makeRed . printError) e
+
+            when dumpCFG $
+                saveGraph (out ++ ".cfg") graph
+
+            let ssafree = eliminatePhis graph
+
+            when dumpCFG $
+                saveGraph (out ++ ".ssacfg") ssafree
+
+            when dumpCFG $
+                print ssafree
+
+            let linear    = linearize ssafree
+            when dumpCFG $
+                printPseudo linear
             
+            let allocated = allocate linear
+            let resolved  = resolve allocated
+
+            writeFile out (exportProgram resolved)

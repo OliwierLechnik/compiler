@@ -60,7 +60,10 @@ executable compiler
     -- Modules included in this executable, other than Main.
     -- other-modules:
 
-    other-modules:    AST, Lexer, Parser, PrettyAST, Semantics, SymbolTable, CodeGen, GraphExporter
+    other-modules:      AST, CodeGen, GraphExporter, IR, LabelResolver,
+                        Linearization, Parser, PhiElimination, PrettyAST,
+                        PseudoInstructions, PseudoPrinter, RegisterAllocator,
+                        Runtime, Semantics, SymbolTable, VMInterface
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
