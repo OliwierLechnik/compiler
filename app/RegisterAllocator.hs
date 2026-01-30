@@ -38,34 +38,46 @@ type Coloring = Map VReg Register
 -- Analysis
 -- ============================================================================
 
+getUses :: Pseudo -> [PReg]
+getUses p = case p of
+
+    P_RSTORE r          -> [r, Right RegA] -- FIX: RSTORE reads pointer
+    P_SWP (Left _)      -> [Right RegA]    -- FIX: Virtual SWP is Def-Only (Write)
+    P_SWP (Right r)     -> [Right r, Right RegA] -- Phys SWP is Read-Write
+
+    P_RLOAD r           -> [r]
+    P_ADD r             -> [r, Right RegA]
+    P_SUB r             -> [r, Right RegA]
+    P_INC r             -> [r]
+    P_DEC r             -> [r]
+    P_SHL r             -> [r]
+    P_SHR r             -> [r]
+    P_STORE _           -> [Right RegA]
+    P_WRITE             -> [Right RegA]
+    P_JPOS _            -> [Right RegA]
+    P_JZERO _           -> [Right RegA]
+    P_RTRN              -> [Right RegA]
+    P_JUMP (T_VReg v)   -> [Left v]
+    P_JPOS (T_VReg v)   -> [Left v]
+    P_JZERO (T_VReg v)  -> [Left v]
+    P_CALL (T_VReg v)   -> [Left v]
+    _                   -> []
+
 getDefs :: Pseudo -> [PReg]
 getDefs p = case p of
-    P_RSTORE r  -> [r]
-    P_SWP r     -> [r]
+    -- SWP always Defines (Overwrites) both operands
+    P_SWP r     -> [r, Right RegA]
     P_RST r     -> [r]
     P_INC r     -> [r]
     P_DEC r     -> [r]
     P_SHL r     -> [r]
     P_SHR r     -> [r]
+    P_RLOAD _   -> [Right RegA]
+    P_LOAD _    -> [Right RegA]
+    P_ADD _     -> [Right RegA]
+    P_SUB _     -> [Right RegA]
+    P_READ      -> [Right RegA]
     _           -> []
-
-getUses :: Pseudo -> [PReg]
-getUses p = case p of
-    P_RLOAD r   -> [r]
-    P_ADD r     -> [r]
-    P_SUB r     -> [r]
-    -- P_SWP r     -> [r]
-    P_INC r     -> [r]
-    P_DEC r     -> [r]
-    P_SHL r     -> [r]
-    P_SHR r     -> [r]
-    P_LOAD (T_VReg v)  -> [Left v]
-    P_STORE (T_VReg v) -> [Left v]
-    P_JUMP (T_VReg v)  -> [Left v]
-    P_JPOS (T_VReg v)  -> [Left v]
-    P_JZERO (T_VReg v) -> [Left v]
-    P_CALL (T_VReg v)  -> [Left v]
-    _                  -> []
 
 -- Helper to extract label name from instruction (Assuming string labels)
 getLabel :: Pseudo -> Maybe Label
@@ -220,16 +232,19 @@ linearScan intervals preColored = go sortedIntervals [] Map.empty []
                         newColoring = Map.insert v victimReg coloring
                     in
                     go rest finalActive newColoring (victimV : spilled)
-
 -- ============================================================================
 -- Main & Rewriting
 -- ============================================================================
 
+-- Global constant
+maxAddr :: Integer
+maxAddr = (2^62) - 1
+
 allocate :: [Pseudo] -> [Pseudo]
-allocate instrs = allocateStep 0 instrs
+allocate instrs = allocateStep 0 maxAddr instrs
   where
-    allocateStep depth currentCode 
-        | depth > 50 = error "Register Allocation infinite loop (Spill thrashing)"
+    allocateStep depth currentSpillAddr currentCode 
+        | depth > 50 = error "Spill thrashing"
         | otherwise = 
             let 
                 intervals = buildLiveIntervals currentCode
@@ -239,8 +254,45 @@ allocate instrs = allocateStep 0 instrs
             if null spilled
             then applyColoring coloring currentCode
             else 
-                let newCode = rewriteSpills spilled currentCode
-                in allocateStep (depth + 1) newCode
+                let (nextSpillAddr, newCode) = rewriteSpills currentSpillAddr spilled currentCode
+                in allocateStep (depth + 1) nextSpillAddr newCode
+
+-- Update rewriteSpills signature
+-- In RegisterAllocator.hs
+
+rewriteSpills :: Integer -> [VReg] -> [Pseudo] -> (Integer, [Pseudo])
+rewriteSpills currentSpillAddr spilledVars instrs = (nextSpillAddr, newInstrs)
+  where
+    -- 1. Calculate new addresses for this batch of spills
+    uniqueSpills = nub spilledVars
+    spillCount = fromIntegral (length uniqueSpills)
+    
+    -- Assign addresses descending: 900, 899, 898...
+    assignedAddrs = [currentSpillAddr, currentSpillAddr - 1 ..]
+    spillMap = Map.fromList $ zip uniqueSpills assignedAddrs
+    
+    -- 2. Update the counter for the next pass so it doesn't overlap
+    nextSpillAddr = currentSpillAddr - spillCount
+
+    -- 3. Rewrite the instructions
+    newInstrs = concatMap (process spillMap) instrs
+
+    -- ====================================================================
+    -- This is the helper function that was missing
+    -- ====================================================================
+    process :: Map VReg Address -> Pseudo -> [Pseudo]
+    process mapping instr = 
+        let 
+            -- We must check if any variable used/defined in this instruction 
+            -- is in our spill map.
+            defs = [v | Left v <- getDefs instr]
+            uses = [v | Left v <- getUses instr]
+            
+            isSpilled v = Map.member v mapping
+        in 
+            if any isSpilled (defs ++ uses)
+            then expandSpillInstr instr mapping -- Call the expansion logic
+            else [instr]                        -- Keep instruction as is
 
 applyColoring :: Coloring -> [Pseudo] -> [Pseudo]
 applyColoring coloring = map replace
@@ -273,29 +325,15 @@ applyColoring coloring = map replace
         P_CALL t   -> P_CALL (tgt t)
         other      -> other
 
-rewriteSpills :: [VReg] -> [Pseudo] -> [Pseudo]
-rewriteSpills spilledVars instrs = concatMap process instrs
-  where
-    maxAddr :: Integer
-    maxAddr = (2^62) - 1
 
-    uniqueSpills = nub spilledVars
-    spillMap = Map.fromList $ zip uniqueSpills [maxAddr, maxAddr - 1 ..]
 
-    process instr = 
-        let defs = [v | Left v <- getDefs instr]
-            uses = [v | Left v <- getUses instr]
-            isSpilled v = Map.member v spillMap
-        in if any isSpilled (defs ++ uses)
-           then expandSpillInstr instr spillMap
-           else [instr]
+-- In RegisterAllocator.hs
 
 expandSpillInstr :: Pseudo -> Map VReg Address -> [Pseudo]
 expandSpillInstr instr mapping = 
     let look v = Map.lookup v mapping
     in case instr of
         -- 1. Indirect Store: Mem[v] <- RegA
-        -- v is the POINTER (spilled).
         P_RSTORE (Left v) | Just addr <- look v -> 
             [ P_SWP (Right scratchReg)      -- Save A to H
             , P_LOAD (T_Addr addr)          -- Load Pointer v to A
@@ -304,51 +342,37 @@ expandSpillInstr instr mapping =
             ]
 
         -- 2. Indirect Load: RegA <- Mem[v]
-        -- v is the POINTER (spilled).
         P_RLOAD (Left v) | Just addr <- look v ->
             [ P_LOAD (T_Addr addr)          -- Load Pointer v to A
             , P_SWP (Right scratchReg)      -- Move Pointer to H
             , P_RLOAD (Right scratchReg)    -- A = Mem[H]
             ]
 
-        -- 3. Simple Moves (Assigning to/from the variable itself)
+        -- 3. Simple Moves (Memory Access)
         P_STORE (T_VReg v) | Just addr <- look v -> [P_STORE (T_Addr addr)]
         P_LOAD (T_VReg v)  | Just addr <- look v -> [P_LOAD (T_Addr addr)]
         
         -- 4. Math: A = A + v
-        -- P_ADD (Left v) | Just addr <- look v -> 
-        --     [ P_SWP (Right scratchReg)      -- H = Acc (A)
-        --     , P_LOAD (T_Addr addr)          -- A = v
-        --     , P_ADD (Right scratchReg)      -- A = v + Acc
-        --     -- Result is in A. H is garbage (contains v or Acc depending on HW), but unused.
-        --     ]
-            
-        -- -- 5. Math: A = A - v
-        -- P_SUB (Left v) | Just addr <- look v -> 
-        --     [ P_SWP (Right scratchReg)      -- H = Acc (A)
-        --     , P_LOAD (T_Addr addr)          -- A = v
-        --     , P_SWP (Right scratchReg)      -- A = Acc, H = v
-        --     , P_SUB (Right scratchReg)      -- A = Acc - v
-        --     ]
         P_ADD (Left v) | Just addr <- look v -> 
-            [ P_SWP (Right scratchReg)      -- 1. Save current A (Accumulator) in H
-            , P_LOAD (T_Addr addr)          -- 2. Load v (the operand) from stack to A
-            , P_SWP (Right scratchReg)      -- 3. Now A = Accumulator, H = v
-            , P_ADD (Right scratchReg)      -- 4. A = A + H
+            [ P_SWP (Right scratchReg)      -- Save A
+            , P_LOAD (T_Addr addr)          -- Load v
+            , P_SWP (Right scratchReg)      -- Restore A, H=v
+            , P_ADD (Right scratchReg)      -- A + H
             ]
             
-        -- 5. Math: A = A - v (v is spilled)
+        -- 5. Math: A = A - v
         P_SUB (Left v) | Just addr <- look v -> 
-            [ P_SWP (Right scratchReg)      -- 1. Save current A in H
-            , P_LOAD (T_Addr addr)          -- 2. Load v from stack to A
-            , P_SWP (Right scratchReg)      -- 3. A = Accumulator, H = v
-            , P_SUB (Right scratchReg)      -- 4. A = A - H
-            ]
-        -- 6. Unary: v++ / v--
-        P_INC (Left v) | Just addr <- look v ->
-            [ P_SWP (Right scratchReg)      -- Save A to H
+            [ P_SWP (Right scratchReg)      -- Save A
             , P_LOAD (T_Addr addr)          -- Load v
-            , P_INC (Right RegA)            -- Increment v
+            , P_SWP (Right scratchReg)      -- Restore A, H=v
+            , P_SUB (Right scratchReg)      -- A - H
+            ]
+
+        -- 6. Read-Modify-Write Unary: INC, DEC
+        P_INC (Left v) | Just addr <- look v ->
+            [ P_SWP (Right scratchReg)      -- Save A
+            , P_LOAD (T_Addr addr)          -- Load v
+            , P_INC (Right RegA)            -- Op
             , P_STORE (T_Addr addr)         -- Store v
             , P_SWP (Right scratchReg)      -- Restore A
             ]
@@ -360,14 +384,49 @@ expandSpillInstr instr mapping =
             , P_STORE (T_Addr addr)
             , P_SWP (Right scratchReg)
             ]
-        
-        -- 7. Swap: A <-> v
+
+        -- 7. MISSING: Bitwise Shifts (SHL, SHR)
+        -- These were causing your thrashing loop!
+        P_SHL (Left v) | Just addr <- look v ->
+            [ P_SWP (Right scratchReg)      -- Save A
+            , P_LOAD (T_Addr addr)          -- Load v
+            , P_SHL (Right RegA)            -- Op (Shift A)
+            , P_STORE (T_Addr addr)         -- Store v
+            , P_SWP (Right scratchReg)      -- Restore A
+            ]
+
+        P_SHR (Left v) | Just addr <- look v ->
+            [ P_SWP (Right scratchReg)      -- Save A
+            , P_LOAD (T_Addr addr)          -- Load v
+            , P_SHR (Right RegA)            -- Op (Shift A)
+            , P_STORE (T_Addr addr)         -- Store v
+            , P_SWP (Right scratchReg)      -- Restore A
+            ]
+
+        -- 8. MISSING: Reset (RST)
+        P_RST (Left v) | Just addr <- look v ->
+            [ P_SWP (Right scratchReg)      -- Save A (we need to preserve A's value)
+            , P_RST (Right RegA)            -- A = 0
+            , P_STORE (T_Addr addr)         -- Mem[v] = 0
+            , P_SWP (Right scratchReg)      -- Restore A
+            ]
+
+        -- 9. Swap: A <-> v
         P_SWP (Left v) | Just addr <- look v ->
-            [ P_SWP (Right scratchReg)      -- 1. H = NewVal(A), A = OldH
-            , P_LOAD (T_Addr addr)          -- 2. A = OldVal(v)
-            , P_SWP (Right scratchReg)      -- 3. A = NewVal, H = OldVal
-            , P_STORE (T_Addr addr)         -- 4. Store NewVal to v
-            , P_SWP (Right scratchReg)      -- 5. A = OldVal, H = NewVal (Garbage)
+            [ P_SWP (Right scratchReg)      -- H = NewVal(A), A = OldH
+            , P_LOAD (T_Addr addr)          -- A = OldVal(v)
+            , P_SWP (Right scratchReg)      -- A = NewVal, H = OldVal
+            , P_STORE (T_Addr addr)         -- Store NewVal to v
+            , P_SWP (Right scratchReg)      -- A = OldVal, H = NewVal
             ]
             
-        _ -> [instr]
+        -- Fallback: If it's a VReg that ISN'T in the map, keep it.
+        -- But if it IS in the map and we didn't match above, it's a fatal error.
+        _ -> 
+            let defs = [v | Left v <- getDefs instr]
+                uses = [v | Left v <- getUses instr]
+                spilledHere = filter (\v -> Map.member v mapping) (defs ++ uses)
+            in
+            if null spilledHere 
+            then [instr] -- Instruction doesn't use the spilled var, keep it.
+            else error $ "RegisterAllocator: Unhandled instruction for spilled var: " ++ show instr ++ " Vars: " ++ show spilledHere

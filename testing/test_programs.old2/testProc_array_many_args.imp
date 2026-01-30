@@ -1,0 +1,14 @@
+PROCEDURE touch(T t, a,b,c,d,e,f,g,h) IS
+IN
+  t[1] := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h,arr[1:1],x
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;
+  touch(arr,a,b,c,d,e,f,g,h);
+  x := arr[1];
+  WRITE x;
+END
+

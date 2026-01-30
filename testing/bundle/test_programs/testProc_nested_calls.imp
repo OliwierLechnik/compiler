@@ -1,0 +1,19 @@
+PROCEDURE inc(I a) IS
+IN
+  a := a + 1;
+END
+
+PROCEDURE inc2(I a) IS
+IN
+  inc(a);
+  inc(a);
+END
+
+PROGRAM IS
+  x
+IN
+  x := 3;
+  inc2(x);
+  WRITE x;
+END
+

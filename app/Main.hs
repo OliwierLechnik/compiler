@@ -18,7 +18,7 @@ import GraphExporter
 import PhiElimination
 import Linearization
 import PseudoPrinter
-import RegisterAllocator
+import RegisterNaiveAllocator
 import LabelResolver
 import VMInterface (exportProgram)
 import Control.Monad (when)

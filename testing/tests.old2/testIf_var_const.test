@@ -1,0 +1,22 @@
+testIf_var_const.imp
+? 7
+> 1
+> 3
+> 6
+> 7
+
+testIf_var_const.imp
+? 3
+> 2
+> 4
+> 6
+> 3
+
+testIf_var_const.imp
+? 5
+> 3
+> 4
+> 5
+> 5
+
+

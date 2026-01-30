@@ -1,0 +1,50 @@
+RST a
+INC a
+SHL a
+INC a
+SWP b
+RST a
+INC a
+SHL a
+SHL a
+SWP c
+RST a
+ADD b
+SWP d
+RST a
+ADD c
+SWP e
+RST a
+SWP f
+RST a
+ADD e
+JZERO 37
+RST a
+ADD e
+SWP g
+SHR g
+SHL g
+RST a
+ADD e
+SUB g
+JZERO 34
+RST a
+ADD f
+ADD d
+SWP f
+SHL d
+SHR e
+JUMP 18
+RST a
+ADD f
+SWP d
+RST a
+ADD b
+WRITE
+RST a
+ADD c
+WRITE
+RST a
+ADD d
+WRITE
+HALT

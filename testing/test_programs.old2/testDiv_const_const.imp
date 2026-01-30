@@ -1,0 +1,7 @@
+PROGRAM IS
+  a
+IN
+  a := 6 / 2;
+  WRITE a;
+END
+

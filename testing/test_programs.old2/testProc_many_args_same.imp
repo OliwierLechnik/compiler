@@ -1,0 +1,13 @@
+PROCEDURE add8(a,b,c,d,e,f,g,h) IS
+IN
+  a := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h
+IN
+  a:=1;b:=1;c:=1;d:=1;e:=1;f:=1;g:=1;h:=1;
+  add8(a,b,c,d,e,f,g,h);
+  WRITE a;
+END
+

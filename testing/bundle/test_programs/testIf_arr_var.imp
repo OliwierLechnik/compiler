@@ -1,0 +1,15 @@
+PROGRAM IS
+  t[1:1],b,c
+IN
+  READ b;
+  t[1] := 5;
+  IF t[1] >  b THEN c := 1; WRITE c; ENDIF
+  IF t[1] <  b THEN c := 2; WRITE c; ENDIF
+  IF t[1] >= b THEN c := 3; WRITE c; ENDIF
+  IF t[1] <= b THEN c := 4; WRITE c; ENDIF
+  IF t[1] =  b THEN c := 5; WRITE c; ENDIF
+  IF t[1] != b THEN c := 6; WRITE c; ENDIF
+  WRITE t[1];
+  WRITE b;
+END
+

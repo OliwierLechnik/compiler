@@ -1,0 +1,259 @@
+#############################
+# PROCEDURE CALL TEST BUNDLE #
+#############################
+
+################################
+# SIMPLE PROCEDURE – SCALARS   #
+################################
+
+### FILE: test_programs/testProc_simple_assign.imp
+PROCEDURE inc(I a) IS
+IN
+  a := a + 1;
+END
+
+PROGRAM IS
+  x
+IN
+  x := 5;
+  inc(x);
+  WRITE x;
+END
+
+### FILE: tests/testProc_simple_assign.test
+testProc_simple_assign.imp
+> 6
+
+
+################################
+# ALIASING (SAME VARIABLE)     #
+################################
+
+### FILE: test_programs/testProc_aliasing_same.imp
+PROCEDURE add(a, b) IS
+IN
+  a := a + b;
+END
+
+PROGRAM IS
+  x
+IN
+  x := 7;
+  add(x, x);
+  WRITE x;
+END
+
+### FILE: tests/testProc_aliasing_same.test
+testProc_aliasing_same.imp
+> 14
+
+
+################################
+# NESTED PROCEDURE CALLS       #
+################################
+
+### FILE: test_programs/testProc_nested_calls.imp
+PROCEDURE inc(I a) IS
+IN
+  a := a + 1;
+END
+
+PROCEDURE inc2(I a) IS
+IN
+  inc(a);
+  inc(a);
+END
+
+PROGRAM IS
+  x
+IN
+  x := 3;
+  inc2(x);
+  WRITE x;
+END
+
+### FILE: tests/testProc_nested_calls.test
+testProc_nested_calls.imp
+> 5
+
+
+################################
+# PASSING VALUES BACK & FORTH  #
+################################
+
+### FILE: test_programs/testProc_swap.imp
+PROCEDURE swap(I a, I b) IS
+  t
+IN
+  t := a;
+  a := b;
+  b := t;
+END
+
+PROGRAM IS
+  x,y
+IN
+  x := 4;
+  y := 9;
+  swap(x,y);
+  WRITE x;
+  WRITE y;
+END
+
+### FILE: tests/testProc_swap.test
+testProc_swap.imp
+> 9
+> 4
+
+
+################################
+# ARRAY PASSING (WRITE-BACK)   #
+################################
+
+### FILE: test_programs/testProc_array_pass.imp
+PROCEDURE fill(I t) IS
+IN
+  t[1] := 7;
+  t[2] := 11;
+END
+
+PROGRAM IS
+  a[1:2],x,y
+IN
+  fill(a);
+  x := a[1];
+  y := a[2];
+  WRITE x;
+  WRITE y;
+END
+
+### FILE: tests/testProc_array_pass.test
+testProc_array_pass.imp
+> 7
+> 11
+
+
+################################
+# ARRAY + SCALAR MIX           #
+################################
+
+### FILE: test_programs/testProc_array_scalar.imp
+PROCEDURE add_to_arr(I t, I x) IS
+IN
+  t[1] := t[1] + x;
+END
+
+PROGRAM IS
+  a[1:1],v,tmp
+IN
+  a[1] := 10;
+  v := 3;
+  add_to_arr(a,v);
+  tmp := a[1];
+  WRITE tmp;
+END
+
+### FILE: tests/testProc_array_scalar.test
+testProc_array_scalar.imp
+> 13
+
+
+################################
+# ARRAY FORWARDED THROUGH CALL #
+################################
+
+### FILE: test_programs/testProc_array_forward.imp
+PROCEDURE set1(I t) IS
+IN
+  t[1] := 5;
+END
+
+PROCEDURE set2(I t) IS
+IN
+  set1(t);
+  t[1] := t[1] + 2;
+END
+
+PROGRAM IS
+  a[1:1],x
+IN
+  set2(a);
+  x := a[1];
+  WRITE x;
+END
+
+### FILE: tests/testProc_array_forward.test
+testProc_array_forward.imp
+> 7
+
+
+################################
+# REGISTER SPILLING (8+ ARGS)  #
+################################
+
+### FILE: test_programs/testProc_many_args_new.imp
+PROCEDURE sum8(a,b,c,d,e,f,g,h, I out) IS
+IN
+  out := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;
+  sum8(a,b,c,d,e,f,g,h,res);
+  WRITE res;
+END
+
+### FILE: tests/testProc_many_args_new.test
+testProc_many_args_new.imp
+> 36
+
+
+################################
+# SPILLING + ALIASING          #
+################################
+
+### FILE: test_programs/testProc_many_args_same.imp
+PROCEDURE add8(a,b,c,d,e,f,g,h) IS
+IN
+  a := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h
+IN
+  a:=1;b:=1;c:=1;d:=1;e:=1;f:=1;g:=1;h:=1;
+  add8(a,b,c,d,e,f,g,h);
+  WRITE a;
+END
+
+### FILE: tests/testProc_many_args_same.test
+testProc_many_args_same.imp
+> 8
+
+
+################################
+# ARRAY + MANY ARGS (SPILL)    #
+################################
+
+### FILE: test_programs/testProc_array_many_args.imp
+PROCEDURE touch(T t, a,b,c,d,e,f,g,h) IS
+IN
+  t[1] := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h,arr[1:1],x
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;
+  touch(arr,a,b,c,d,e,f,g,h);
+  x := arr[1];
+  WRITE x;
+END
+
+### FILE: tests/testProc_array_many_args.test
+testProc_array_many_args.imp
+> 36
+
+

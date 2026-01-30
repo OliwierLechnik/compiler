@@ -1,0 +1,20 @@
+# Binarna postać liczby 
+PROGRAM IS
+	n, t[0:24]
+IN
+	n := 24;
+	t[0] := 0;
+	t[n] := n;
+
+	FOR i FROM 0 TO n DO
+		WRITE t[i];
+	ENDFOR
+
+	FOR i FROM 24 DOWNTO 0 DO
+		t[i] := i*i;
+	ENDFOR
+
+	FOR i FROM 0 TO n DO
+		WRITE t[i];
+	ENDFOR
+END

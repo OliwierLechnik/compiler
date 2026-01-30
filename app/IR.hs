@@ -21,6 +21,9 @@ data Operand
 data BinOp = OpAdd | OpSub | OpMul | OpDiv | OpMod deriving (Eq, Show)
 data CondOp = Eq | Neq | Gt | Lt | Ge | Le deriving (Eq, Show)
 
+data Expression = Bin BinOp Expression Expression | Imm Operand
+    deriving (Eq, Show)
+
 data Phi = Phi VReg [(Label, Operand)]
     deriving (Eq, Show)
 

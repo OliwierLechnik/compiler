@@ -1,0 +1,13 @@
+PROCEDURE sum8(a,b,c,d,e,f,g,h, I out) IS
+IN
+  out := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;
+  sum8(a,b,c,d,e,f,g,h,res);
+  WRITE res;
+END
+

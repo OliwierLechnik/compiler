@@ -8,7 +8,9 @@ END
 
 PROCEDURE foo(a, b) IS
 IN
-    swp(b, a);
+    a := a+1;
+    b := b-1;
+    swp(a, b);
 END
 
 PROGRAM IS
@@ -16,7 +18,7 @@ PROGRAM IS
 IN
    READ a;
    READ b;
-   swp(a, b);
+   foo(a, b);
    WRITE a;
    WRITE b;
 END

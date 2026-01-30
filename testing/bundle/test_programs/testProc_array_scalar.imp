@@ -1,0 +1,15 @@
+PROCEDURE add_to_arr(I t, I x) IS
+IN
+  t[1] := t[1] + x;
+END
+
+PROGRAM IS
+  a[1:1],v,tmp
+IN
+  a[1] := 10;
+  v := 3;
+  add_to_arr(a,v);
+  tmp := a[1];
+  WRITE tmp;
+END
+

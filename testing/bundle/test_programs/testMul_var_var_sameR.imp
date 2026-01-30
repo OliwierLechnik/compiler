@@ -1,0 +1,10 @@
+PROGRAM IS
+  a,b
+IN
+  a:=3;
+  b:=4;
+  b:=a*b;
+  WRITE a;
+  WRITE b;
+END
+

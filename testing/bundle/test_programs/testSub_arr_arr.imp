@@ -1,0 +1,11 @@
+PROGRAM IS
+  t[1:2],c
+IN
+  t[1]:=7;
+  t[2]:=3;
+  c:=t[1]-t[2];
+  WRITE t[1];
+  WRITE t[2];
+  WRITE c;
+END
+

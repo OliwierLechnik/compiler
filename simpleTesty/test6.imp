@@ -1,0 +1,12 @@
+PROGRAM IS
+  a,b, c, d ,e
+IN
+    READ a;
+    READ b;
+    c := 10 * a;
+    d := b * 100;
+    e := a*b;
+    WRITE c;
+    WRITE d;
+    WRITE e;
+END

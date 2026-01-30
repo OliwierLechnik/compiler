@@ -1,0 +1,19 @@
+PROCEDURE child(O z) IS
+IN
+    z := 10;
+END
+
+PROCEDURE parent(O res) IS
+    temp_a, temp_b
+IN
+    temp_a := 5;
+    child(temp_b); # This call might overwrite temp_a's register
+    res := temp_a + temp_b;
+END
+
+PROGRAM IS
+    w
+IN
+    parent(w);
+    WRITE w;
+END

@@ -1,0 +1,13 @@
+PROGRAM IS
+  a,c
+IN
+  READ a;
+  IF a >  5 THEN c := 1; WRITE c; ENDIF
+  IF a <  5 THEN c := 2; WRITE c; ENDIF
+  IF a >= 5 THEN c := 3; WRITE c; ENDIF
+  IF a <= 5 THEN c := 4; WRITE c; ENDIF
+  IF a =  5 THEN c := 5; WRITE c; ENDIF
+  IF a != 5 THEN c := 6; WRITE c; ENDIF
+  WRITE a;
+END
+

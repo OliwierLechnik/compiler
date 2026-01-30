@@ -61,15 +61,18 @@ executable compiler
     -- other-modules:
 
     other-modules:      AST, CodeGen, GraphExporter, IR, LabelResolver,
-                        Linearization, Parser, PhiElimination, PrettyAST,
-                        PseudoInstructions, PseudoPrinter, RegisterAllocator,
-                        Runtime, Semantics, SymbolTable, VMInterface
+                        Linearization, Parser, Lexer, PhiElimination, PrettyAST,
+                        PseudoInstructions, PseudoPrinter, RegisterAllocator, RegisterNaiveAllocator,
+                        Runtime, Semantics, SymbolTable, VMInterface, Expression
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base , megaparsec, parser-combinators, text, containers, mtl
+    build-depends:    base >=4.16 && <5, hegg >= 0.6.0.0, megaparsec, parser-combinators, text, containers, mtl, transformers, hashable, QuickCheck
+
+    packages: .
+            libs/hegg
 
     -- Directories containing source files.
     hs-source-dirs:   app

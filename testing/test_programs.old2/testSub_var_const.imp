@@ -1,0 +1,9 @@
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=a-5;
+  WRITE a;
+  WRITE c;
+END
+

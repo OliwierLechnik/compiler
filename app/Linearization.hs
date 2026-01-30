@@ -684,29 +684,24 @@ genDivMod pN pD = do
     genConst 1 (Left bit)
 
     -- Check for divide by zero (Optional, skipping for speed)
-    emit $ P_SWP (Left d)
-    emit $ P_JZERO (T_Label endZero)
-    emit $ P_SWP (Left d)
-    
-    -- Phase 1: Shift D left until it's greater than N
-    -- (Or until we are about to overflow, practically 63 bits)
-    emit $ P_LABEL loopShift
-    
-    -- if D >= n (actually checks if n < D), stop shifting
-    -- Check: n - D < 0
-    emit $ P_RST (Right RegA)
-    emit $ P_ADD (Left n)
-    emit $ P_SUB (Left d) 
-    -- If result is negative (or zero? JPOS is >0), wait.
-    -- Strict check: if D > N, we stop. 
-    -- Implementation: if n - D < 0.
-    -- Since we don't have JNEG, we use JPOS on (D - N). 
-    -- If (D - N) > 0, stop.
     emit $ P_RST (Right RegA)
     emit $ P_ADD (Left d)
-    emit $ P_SUB (Left n)
-    emit $ P_JPOS (T_Label loopSub)
+    emit $ P_JZERO (T_Label endZero)
     
+-- Phase 1: Shift D left until it's greater than or equal to N
+    emit $ P_LABEL loopShift
+    
+    -- Check: is n <= d? (Equivalently: is n - d == 0?)
+    -- Saturating math: If n <= d, n - d = 0.
+    --                  If n > d,  n - d > 0.
+    emit $ P_RST (Right RegA)
+    emit $ P_ADD (Left n)
+    emit $ P_SUB (Left d)
+    emit $ P_JZERO (T_Label loopSub) -- Stop shifting if n is covered by d
+    
+    emit $ P_SHL (Left d)
+    emit $ P_SHL (Left bit)
+    emit $ P_JUMP (T_Label loopShift)
     -- Check for overflow (if D becomes huge). 
     -- Simple heuristic: if D < 0 (high bit set), stop. 
     -- Assuming signed ints? Let's assume positive inputs for now.

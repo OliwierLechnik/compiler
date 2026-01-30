@@ -1,0 +1,9 @@
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,t[1:1]
+IN
+  t[1]:=4;
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  t[1]:=t[1]-i;
+  WRITE t[1];
+END
+

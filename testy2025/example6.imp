@@ -16,9 +16,9 @@ IN
     FOR j FROM 2 TO n DO
         k := j - 1;
         l := k - 1;
-	i[j] := i[k] + 1;
-	f[j] := f[k] + f[l];
-        s[j] := s[k] * i[j];
+	    i[j] := i[k] + 1;
+	    f[j] := f[k] + f[l];
+        s[j] := i[j] * s[k];
     ENDFOR
     WRITE s[n];
     WRITE f[n];

@@ -1,0 +1,23 @@
+JUMP 14
+RST a
+ADD b
+WRITE
+HALT
+RST b
+INC b
+SHL b
+INC b
+JUMP 1
+RST b
+INC b
+SHL b
+JUMP 1
+READ
+SWP b
+READ
+SWP c
+RST a
+ADD b
+SUB c
+JPOS 10
+JUMP 5

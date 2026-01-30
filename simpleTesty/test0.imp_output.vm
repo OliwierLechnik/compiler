@@ -1,0 +1,12 @@
+JUMP 1
+READ
+SWP b
+RST a
+INC a
+SHL a
+ADD b
+SWP b
+RST a
+ADD b
+WRITE
+HALT

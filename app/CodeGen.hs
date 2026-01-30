@@ -440,7 +440,10 @@ genCommand (While _ cond cmds) = do
     condLabel <- freshLabel "while_cond"
     bodyLabel <- freshLabel "while_body"
     endLabel  <- freshLabel "while_end"
+    
     terminate (Jump condLabel) condLabel
+    
+    -- 1. Setup Phi Nodes
     let modVars = scanModified cmds
     ssaVars <- onlySSA modVars
     loopPhis <- forM ssaVars $ \pid -> do
@@ -449,11 +452,19 @@ genCommand (While _ cond cmds) = do
         emitPhi $ Phi valPhi [(entryLabel, valEntry)]
         writeVar pid valPhi
         return (pid, valPhi)
+
+    -- 2. CRITICAL: Capture the Env state at the Loop Header
+    -- This env maps 'a' -> 'vPhiA', 'b' -> 'vPhiB'
+    loopHeaderEnv <- gets varEnv 
+
     genCondition cond bodyLabel endLabel
     forM_ cmds genCommand
+    
     bodyEndLabel <- gets currentLabel
     bodyEndEnv   <- gets varEnv
     terminate (Jump condLabel) endLabel
+    
+    -- 3. Backpatching
     forM_ loopPhis $ \(pid, valPhi) -> do
         valBack <- getEnvVal pid bodyEndEnv
         updateBlock condLabel $ \blk ->
@@ -462,6 +473,9 @@ genCommand (While _ cond cmds) = do
                     then Phi r (ops ++ [(bodyEndLabel, valBack)]) 
                     else Phi r ops
             in blk { blockPhis = map updatePhi (blockPhis blk) }
+
+    -- 4. FIX: Restore the Header Env for subsequent code
+    modify $ \s -> s { varEnv = loopHeaderEnv }
 
 genCommand (Repeat _ cmds cond) = do
     entryLabel <- gets currentLabel
@@ -490,6 +504,9 @@ genCommand (Repeat _ cmds cond) = do
                     else Phi r ops
             in blk { blockPhis = map updatePhi (blockPhis blk) }
 
+-- In CodeGen.hs
+-- In CodeGen.hs
+
 genCommand (ForLoop _ var startVal endVal dir cmds) = do
     -- 1. [PRE-HEADER] Setup Start Value
     startOp <- genValue startVal
@@ -497,25 +514,21 @@ genCommand (ForLoop _ var startVal endVal dir cmds) = do
     emit $ Move startReg startOp
     writeVar var startReg
     
-    -- 2. [PRE-HEADER] Setup End Value (MOVED HERE)
-    -- We generate it once, before entering the loop. 
-    -- We move it to a fresh register to ensure it is immutable/stable.
+    -- 2. [PRE-HEADER] Setup End Value (Invariant)
     rawEndOp <- genValue endVal
     endReg <- freshVReg
     emit $ Move endReg rawEndOp
-    let endOp = OpReg endReg
-
+    
     -- 3. Prepare Loop Entry
     entryLabel <- gets currentLabel
     entryEnv   <- gets varEnv
     loopLabel <- freshLabel "for_loop"
-    bodyLabel <- freshLabel "for_body"
     endLabel  <- freshLabel "for_end"
     
-    -- Jump to the Loop Header
     terminate (Jump loopLabel) loopLabel
     
     -- 4. [LOOP HEADER] Phi Nodes
+    -- Note: 'var' (loop counter) is always modified, so we include it.
     let modVars = nub (var : scanModified cmds)
     ssaVars <- onlySSA modVars
     loopPhis <- forM ssaVars $ \pid -> do
@@ -525,45 +538,65 @@ genCommand (ForLoop _ var startVal endVal dir cmds) = do
         writeVar pid valPhi
         return (pid, valPhi)
         
-    -- 5. [LOOP HEADER] Condition Check
+    -- 5. CRITICAL: Capture the Env state at the Loop Header
+    -- This ensures code after the loop uses the Phi values (correct values at exit).
+    loopHeaderEnv <- gets varEnv
+
+    -- 6. [LOOP HEADER] Condition Check
+    -- Check if we should enter the loop at all.
     currVarOp <- readVar var 
     currVarVal <- case currVarOp of { OpReg r -> return r; _ -> error "Loop var not reg" }
     
-    -- We use the pre-calculated 'endOp' here
+    bodyLabel <- freshLabel "for_body"
+    
     let branchTerm = case dir of 
-            Upwards   -> Branch Gt currVarVal endOp endLabel bodyLabel
-            Downwards -> Branch Lt currVarVal endOp endLabel bodyLabel
+            Upwards   -> Branch Gt currVarVal (OpReg endReg) endLabel bodyLabel
+            Downwards -> Branch Lt currVarVal (OpReg endReg) endLabel bodyLabel
             
     terminate branchTerm bodyLabel
     
-    -- 6. [LOOP BODY]
+    -- 7. [LOOP BODY]
     forM_ cmds genCommand
     
-    -- 7. [LOOP BODY] Increment/Decrement Loop Variable
-    valToMod <- readVar var
+    -- 8. [LOOP LATCH] Check Bounds BEFORE Increment
+    -- This prevents wrapping/saturation issues (e.g. 0 - 1 = 0) causing infinite loops.
+    
+    -- Get current i (potentially modified by body)
+    valAtLatchOp <- readVar var
+    valAtLatch <- case valAtLatchOp of { OpReg r -> return r; OpImm i -> do { t <- freshVReg; emit $ Move t (OpImm i); return t } }
+    
+    continueLabel <- freshLabel "for_continue"
+    
+    -- If i == end, we are done with this iteration AND the loop.
+    -- (The condition logic assumes we execute inclusive range).
+    terminate (Branch Eq valAtLatch (OpReg endReg) endLabel continueLabel) endLabel
+    
+    -- 9. [CONTINUE BLOCK] Increment/Decrement
+    startBlock continueLabel
+    
     newVal <- freshVReg
     let op = case dir of { Upwards -> OpAdd; Downwards -> OpSub }
-    
-    case valToMod of 
-        OpReg r -> emit $ Compute op newVal (OpReg r) (OpImm 1)
-        OpImm i -> emit $ Compute op newVal (OpImm i) (OpImm 1)
-        
+    emit $ Compute op newVal (OpReg valAtLatch) (OpImm 1)
     writeVar var newVal
     
-    -- 8. [LOOP LATCH] Jump back to header
-    bodyEndLabel <- gets currentLabel
-    bodyEndEnv   <- gets varEnv
+    -- 10. Jump back to Header
+    bodyEndLabel <- gets currentLabel -- capture label of the continue block
+    bodyEndEnv   <- gets varEnv       -- capture env after increment
     terminate (Jump loopLabel) endLabel
     
-    -- 9. Backpatching Phis
+    -- 11. Backpatching Phis
     forM_ loopPhis $ \(pid, valPhi) -> do
         valBack <- getEnvVal pid bodyEndEnv
         updateBlock loopLabel $ \blk ->
             let updatePhi (Phi r ops) = 
                     if r == valPhi 
+                    -- Important: The edge now comes from 'bodyEndLabel' (the continue block)
                     then Phi r (ops ++ [(bodyEndLabel, valBack)]) 
                     else Phi r ops
             in blk { blockPhis = map updatePhi (blockPhis blk) }
+
+    -- 12. FIX: Restore environment to the Loop Header state
+    modify $ \s -> s { varEnv = loopHeaderEnv }
 
 genCondition :: Condition -> Label -> Label -> Codegen ()
 genCondition cond trueLabel falseLabel = do
@@ -598,8 +631,7 @@ mergeEnvironments labelTrue envTrue labelFalse envFalse = do
 
 scanModified :: [Command] -> [Pid]
 scanModified [] = []
-scanModified (ProcCall _ _ args : cs) =
-    args ++ scanModified cs
+scanModified (ProcCall _ _ args : cs) = args ++ scanModified cs
 scanModified (c:cs) = nub $ case c of
     Assignment _ (Scalar _ pid) _ -> pid : scanModified cs
     MyRead _ (Scalar _ pid)       -> pid : scanModified cs
@@ -609,4 +641,3 @@ scanModified (c:cs) = nub $ case c of
     Repeat _ c1 _                 -> scanModified c1 ++ scanModified cs
     ForLoop _ pid _ _ _ c1        -> pid : scanModified c1 ++ scanModified cs
     _                             -> scanModified cs
-    -- ProcCall _ _ (args : cs)        -> args ++ scanModified cs

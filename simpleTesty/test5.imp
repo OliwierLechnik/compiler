@@ -1,8 +1,11 @@
 PROGRAM IS
-  foo[0:1000], t[1:23], n
+  x[21:37]
 IN
-  n := 23;
-  FOR i FROM 1 TO n DO
-    t[i] := i;
+  FOR i FROM 37 DOWNTO 21 DO
+    x[i] := 37-i;
+  ENDFOR
+
+  FOR i FROM 21 TO 37 DO
+    WRITE x[i];
   ENDFOR
 END

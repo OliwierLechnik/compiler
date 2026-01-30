@@ -1,0 +1,19 @@
+PROCEDURE set1(I t) IS
+IN
+  t[1] := 5;
+END
+
+PROCEDURE set2(I t) IS
+IN
+  set1(t);
+  t[1] := t[1] + 2;
+END
+
+PROGRAM IS
+  a[1:1],x
+IN
+  set2(a);
+  x := a[1];
+  WRITE x;
+END
+

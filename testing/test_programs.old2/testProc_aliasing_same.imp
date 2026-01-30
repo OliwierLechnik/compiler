@@ -1,0 +1,13 @@
+PROCEDURE add(a, b) IS
+IN
+  a := a + b;
+END
+
+PROGRAM IS
+  x
+IN
+  x := 7;
+  add(x, x);
+  WRITE x;
+END
+

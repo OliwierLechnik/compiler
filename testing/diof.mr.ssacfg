@@ -1,0 +1,86 @@
+{ "blocks": [
+  {
+    "id": "entry",
+    "phis": [],
+    "instructions": [],
+    "terminator": "Jump main_0",
+    "edges": [{"target": "main_0", "label": ""}]
+  },
+  {
+    "id": "if_end_6",
+    "phis": [],
+    "instructions": ["v30 <- Mem[v3]", "v31 <- v29 OpAdd v30", "v32 <- v31 OpSub v24", "v33 <- v23 OpMul v21", "v34 <- Mem[v4]"],
+    "terminator": "Branch Lt v34 v33",
+    "edges": [{"target": "if_true_7", "label": "true"}, {"target": "if_false_8", "label": "false"}]
+  },
+  {
+    "id": "if_end_9",
+    "phis": [],
+    "instructions": ["v39 <- Mem[v4]", "v40 <- v38 OpAdd v39", "v41 <- v40 OpSub v33", "Mem[v3] <- v19", "Mem[v4] <- v21", "v49 <- v41", "v50 <- v21", "v51 <- v32", "v52 <- v33", "v53 <- v19", "v54 <- v22", "v55 <- v16", "v56 <- v23", "v57 <- v22", "v21 <- v49", "v20 <- v50", "v19 <- v51", "v18 <- v52", "v17 <- v53", "v16 <- v54", "v15 <- v55", "v14 <- v56", "v13 <- v57"],
+    "terminator": "Jump while_cond_1",
+    "edges": [{"target": "while_cond_1", "label": ""}]
+  },
+  {
+    "id": "if_false_5",
+    "phis": [],
+    "instructions": ["v28 <- 0", "v58 <- v28", "v29 <- v58"],
+    "terminator": "Jump if_end_6",
+    "edges": [{"target": "if_end_6", "label": ""}]
+  },
+  {
+    "id": "if_false_8",
+    "phis": [],
+    "instructions": ["v37 <- 0", "v59 <- v37", "v38 <- v59"],
+    "terminator": "Jump if_end_9",
+    "edges": [{"target": "if_end_9", "label": ""}]
+  },
+  {
+    "id": "if_true_4",
+    "phis": [],
+    "instructions": ["v26 <- Mem[v2]", "v27 <- v26 OpMul v23", "v60 <- v27", "v29 <- v60"],
+    "terminator": "Jump if_end_6",
+    "edges": [{"target": "if_end_6", "label": ""}]
+  },
+  {
+    "id": "if_true_7",
+    "phis": [],
+    "instructions": ["v35 <- Mem[v1]", "v36 <- v35 OpMul v23", "v61 <- v36", "v38 <- v61"],
+    "terminator": "Jump if_end_9",
+    "edges": [{"target": "if_end_9", "label": ""}]
+  },
+  {
+    "id": "main_0",
+    "phis": [],
+    "instructions": ["Read v42", "Read v43", "Mem[0] <- v42", "Mem[1] <- v43", "Mem[2] <- 0", "Mem[3] <- 0", "Mem[4] <- 0", "Call proc_de(0, 1, 2, 3, 4)", "v44 <- Mem[0]", "v45 <- Mem[1]", "v46 <- Mem[2]", "v47 <- Mem[3]", "v48 <- Mem[4]", "Print v46", "Print v47", "Print v48"],
+    "terminator": "Halt",
+    "edges": []
+  },
+  {
+    "id": "proc_de(v1, v2, v3, v4, v5)",
+    "phis": [],
+    "instructions": ["v0 <- RegA (RetAddr)", "# Args: v1, v2, v3, v4, v5", "v6 <- Mem[v1]", "v7 <- Mem[v2]", "v8 <- 1", "Mem[v3] <- v8", "v9 <- 0", "Mem[v4] <- v9", "v10 <- Mem[v2]", "v11 <- Mem[v1]", "v12 <- v11 OpSub 1", "v62 <- v12", "v63 <- 0", "v64 <- v10", "v65 <- 0", "v66 <- 0", "v67 <- v7", "v68 <- v6", "v69 <- 0", "v70 <- 0", "v21 <- v62", "v20 <- v63", "v19 <- v64", "v18 <- v65", "v17 <- v66", "v16 <- v67", "v15 <- v68", "v14 <- v69", "v13 <- v70"],
+    "terminator": "Jump while_cond_1",
+    "edges": [{"target": "while_cond_1", "label": ""}]
+  },
+  {
+    "id": "while_body_2",
+    "phis": [],
+    "instructions": ["v22 <- v15 OpMod v16", "v23 <- v15 OpDiv v16", "v24 <- v23 OpMul v19", "v25 <- Mem[v3]"],
+    "terminator": "Branch Lt v25 v24",
+    "edges": [{"target": "if_true_4", "label": "true"}, {"target": "if_false_5", "label": "false"}]
+  },
+  {
+    "id": "while_cond_1",
+    "phis": [],
+    "instructions": [],
+    "terminator": "Branch Gt v16 0",
+    "edges": [{"target": "while_body_2", "label": "true"}, {"target": "while_end_3", "label": "false"}]
+  },
+  {
+    "id": "while_end_3",
+    "phis": [],
+    "instructions": ["Mem[v5] <- v15", "RegA <- v0 (RetAddr)"],
+    "terminator": "Return",
+    "edges": []
+  }
+]}

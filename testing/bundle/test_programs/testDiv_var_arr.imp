@@ -1,0 +1,11 @@
+PROGRAM IS
+  a,t[1:1],c
+IN
+  a:=10;
+  t[1]:=5;
+  c:=a/t[1];
+  WRITE a;
+  WRITE t[1];
+  WRITE c;
+END
+

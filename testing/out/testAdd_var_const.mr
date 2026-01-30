@@ -1,0 +1,21 @@
+RST a
+INC a
+SHL a
+SHL a
+INC a
+SHL a
+SWP b
+RST a
+INC a
+SHL a
+SHL a
+INC a
+ADD b
+SWP c
+RST a
+ADD b
+WRITE
+RST a
+ADD c
+WRITE
+HALT

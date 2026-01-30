@@ -24,7 +24,7 @@ IN
 			j:=j-1;
 		ENDWHILE
 		c:=c+i;
-                i:=i+1;
+        i:=i+1;
 	ENDWHILE
 	WRITE a;
 	WRITE b;

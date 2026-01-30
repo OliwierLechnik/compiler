@@ -1,0 +1,1544 @@
+### FILE: test_programs/testAdd_const_const.imp
+PROGRAM IS
+  a
+IN
+  a := 2 + 3;
+  WRITE a;
+END
+
+### FILE: tests/testAdd_const_const.test
+testAdd_const_const.imp
+> 5
+
+
+### FILE: test_programs/testAdd_var_var_new.imp
+PROGRAM IS
+  a,b,c
+IN
+  a:=7;
+  b:=9;
+  c:=a+b;
+  WRITE a;
+  WRITE b;
+  WRITE c;
+END
+
+### FILE: tests/testAdd_var_var_new.test
+testAdd_var_var_new.imp
+> 7
+> 9
+> 16
+
+
+### FILE: test_programs/testAdd_var_var_sameL.imp
+PROGRAM IS
+  a,b
+IN
+  a:=7;
+  b:=9;
+  a:=a+b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testAdd_var_var_sameL.test
+testAdd_var_var_sameL.imp
+> 16
+> 9
+
+
+### FILE: test_programs/testAdd_var_var_sameR.imp
+PROGRAM IS
+  a,b
+IN
+  a:=7;
+  b:=9;
+  b:=a+b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testAdd_var_var_sameR.test
+testAdd_var_var_sameR.imp
+> 7
+> 16
+
+
+### FILE: test_programs/testAdd_var_const.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=a+5;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testAdd_var_const.test
+testAdd_var_const.imp
+> 10
+> 15
+
+
+### FILE: test_programs/testAdd_const_var.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=5+a;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testAdd_const_var.test
+testAdd_const_var.imp
+> 10
+> 15
+
+
+### FILE: test_programs/testAdd_arr_const.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=8;
+  c:=t[1]+3;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testAdd_arr_const.test
+testAdd_arr_const.imp
+> 8
+> 11
+
+
+### FILE: test_programs/testAdd_const_arr.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=8;
+  c:=3+t[1];
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testAdd_const_arr.test
+testAdd_const_arr.imp
+> 8
+> 11
+
+
+### FILE: test_programs/testAdd_var_arr.imp
+PROGRAM IS
+  a,t[1:1],c
+IN
+  a:=4;
+  t[1]:=6;
+  c:=a+t[1];
+  WRITE a;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testAdd_var_arr.test
+testAdd_var_arr.imp
+> 4
+> 6
+> 10
+
+
+### FILE: test_programs/testAdd_arr_arr.imp
+PROGRAM IS
+  t[1:2],c
+IN
+  t[1]:=3;
+  t[2]:=7;
+  c:=t[1]+t[2];
+  WRITE t[1];
+  WRITE t[2];
+  WRITE c;
+END
+
+### FILE: tests/testAdd_arr_arr.test
+testAdd_arr_arr.imp
+> 3
+> 7
+> 10
+
+
+#########################
+# SPILLING TESTS BELOW #
+#########################
+
+### FILE: test_programs/testAdd_reg_spill_new.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  res:=a+i;
+  WRITE res;
+END
+
+### FILE: tests/testAdd_reg_spill_new.test
+testAdd_reg_spill_new.imp
+> 10
+
+
+### FILE: test_programs/testAdd_reg_spill_same.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  a:=a+i;
+  WRITE a;
+  WRITE i;
+END
+
+### FILE: tests/testAdd_reg_spill_same.test
+testAdd_reg_spill_same.imp
+> 10
+> 9
+
+
+### FILE: test_programs/testAdd_spill_reg_new.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  res:=i+a;
+  WRITE res;
+END
+
+### FILE: tests/testAdd_spill_reg_new.test
+testAdd_spill_reg_new.imp
+> 10
+
+
+### FILE: test_programs/testAdd_spill_spill_new.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  res:=h+i;
+  WRITE res;
+END
+
+### FILE: tests/testAdd_spill_spill_new.test
+testAdd_spill_spill_new.imp
+> 17
+
+
+### FILE: test_programs/testAdd_spill_spill_same.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  h:=h+i;
+  WRITE h;
+  WRITE i;
+END
+
+### FILE: tests/testAdd_spill_spill_same.test
+testAdd_spill_spill_same.imp
+> 17
+> 9
+
+
+### FILE: test_programs/testAdd_arr_spill_same.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,t[1:1]
+IN
+  t[1]:=4;
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  t[1]:=t[1]+i;
+  WRITE t[1];
+END
+
+### FILE: tests/testAdd_arr_spill_same.test
+testAdd_arr_spill_same.imp
+> 13
+
+### FILE: test_programs/testSub_const_const.imp
+PROGRAM IS
+  a
+IN
+  a := 3 - 2;
+  WRITE a;
+END
+
+### FILE: tests/testSub_const_const.test
+testSub_const_const.imp
+> 1
+
+
+### FILE: test_programs/testSub_var_var_new.imp
+PROGRAM IS
+  a,b,c
+IN
+  a:=9;
+  b:=7;
+  c:=a-b;
+  WRITE a;
+  WRITE b;
+  WRITE c;
+END
+
+### FILE: tests/testSub_var_var_new.test
+testSub_var_var_new.imp
+> 9
+> 7
+> 2
+
+
+### FILE: test_programs/testSub_var_var_sameL.imp
+PROGRAM IS
+  a,b
+IN
+  a:=9;
+  b:=7;
+  a:=a-b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testSub_var_var_sameL.test
+testSub_var_var_sameL.imp
+> 2
+> 7
+
+
+### FILE: test_programs/testSub_var_var_sameR.imp
+PROGRAM IS
+  a,b
+IN
+  a:=9;
+  b:=7;
+  b:=a-b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testSub_var_var_sameR.test
+testSub_var_var_sameR.imp
+> 9
+> 2
+
+
+### FILE: test_programs/testSub_var_const.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=a-5;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testSub_var_const.test
+testSub_var_const.imp
+> 10
+> 5
+
+
+### FILE: test_programs/testSub_const_var.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=15-a;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testSub_const_var.test
+testSub_const_var.imp
+> 10
+> 5
+
+
+### FILE: test_programs/testSub_arr_const.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=8;
+  c:=t[1]-3;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testSub_arr_const.test
+testSub_arr_const.imp
+> 8
+> 5
+
+
+### FILE: test_programs/testSub_const_arr.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=8;
+  c:=10-t[1];
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testSub_const_arr.test
+testSub_const_arr.imp
+> 8
+> 2
+
+
+### FILE: test_programs/testSub_var_arr.imp
+PROGRAM IS
+  a,t[1:1],c
+IN
+  a:=10;
+  t[1]:=6;
+  c:=a-t[1];
+  WRITE a;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testSub_var_arr.test
+testSub_var_arr.imp
+> 10
+> 6
+> 4
+
+
+### FILE: test_programs/testSub_arr_arr.imp
+PROGRAM IS
+  t[1:2],c
+IN
+  t[1]:=7;
+  t[2]:=3;
+  c:=t[1]-t[2];
+  WRITE t[1];
+  WRITE t[2];
+  WRITE c;
+END
+
+### FILE: tests/testSub_arr_arr.test
+testSub_arr_arr.imp
+> 7
+> 3
+> 4
+
+
+#########################
+# SPILLING TESTS BELOW #
+#########################
+
+### FILE: test_programs/testSub_reg_spill_new.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  res:=i-a;
+  WRITE res;
+END
+
+### FILE: tests/testSub_reg_spill_new.test
+testSub_reg_spill_new.imp
+> 8
+
+
+### FILE: test_programs/testSub_reg_spill_same.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  a:=i-a;
+  WRITE a;
+  WRITE i;
+END
+
+### FILE: tests/testSub_reg_spill_same.test
+testSub_reg_spill_same.imp
+> 8
+> 9
+
+
+### FILE: test_programs/testSub_spill_reg_new.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  res:=a-i;
+  WRITE res;
+END
+
+### FILE: tests/testSub_spill_reg_new.test
+testSub_spill_reg_new.imp
+> 0
+
+
+### FILE: test_programs/testSub_spill_spill_new.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  res:=h-i;
+  WRITE res;
+END
+
+### FILE: tests/testSub_spill_spill_new.test
+testSub_spill_spill_new.imp
+> 0
+
+
+### FILE: test_programs/testSub_spill_spill_same.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  h:=i-h;
+  WRITE h;
+  WRITE i;
+END
+
+### FILE: tests/testSub_spill_spill_same.test
+testSub_spill_spill_same.imp
+> 1
+> 9
+
+
+### FILE: test_programs/testSub_arr_spill_same.imp
+PROGRAM IS
+  a,b,c,d,e,f,g,h,i,t[1:1]
+IN
+  t[1]:=4;
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;i:=9;
+  t[1]:=t[1]-i;
+  WRITE t[1];
+END
+
+### FILE: tests/testSub_arr_spill_same.test
+testSub_arr_spill_same.imp
+> 0
+
+### FILE: test_programs/testIf_var_var.imp
+PROGRAM IS
+  a,b,c
+IN
+  READ a;
+  READ b;
+  IF a >  b THEN c := 1; WRITE c; ENDIF
+  IF a <  b THEN c := 2; WRITE c; ENDIF
+  IF a >= b THEN c := 3; WRITE c; ENDIF
+  IF a <= b THEN c := 4; WRITE c; ENDIF
+  IF a =  b THEN c := 5; WRITE c; ENDIF
+  IF a != b THEN c := 6; WRITE c; ENDIF
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testIf_var_var.test
+testIf_var_var.imp
+? 5 3
+> 1
+> 3
+> 6
+> 5
+> 3
+
+testIf_var_var.imp
+? 3 5
+> 2
+> 4
+> 6
+> 3
+> 5
+
+testIf_var_var.imp
+? 4 4
+> 3
+> 4
+> 5
+> 4
+> 4
+
+
+### FILE: test_programs/testIf_var_const.imp
+PROGRAM IS
+  a,c
+IN
+  READ a;
+  IF a >  5 THEN c := 1; WRITE c; ENDIF
+  IF a <  5 THEN c := 2; WRITE c; ENDIF
+  IF a >= 5 THEN c := 3; WRITE c; ENDIF
+  IF a <= 5 THEN c := 4; WRITE c; ENDIF
+  IF a =  5 THEN c := 5; WRITE c; ENDIF
+  IF a != 5 THEN c := 6; WRITE c; ENDIF
+  WRITE a;
+END
+
+### FILE: tests/testIf_var_const.test
+testIf_var_const.imp
+? 7
+> 1
+> 3
+> 6
+> 7
+
+testIf_var_const.imp
+? 3
+> 2
+> 4
+> 6
+> 3
+
+testIf_var_const.imp
+? 5
+> 3
+> 4
+> 5
+> 5
+
+
+### FILE: test_programs/testIf_const_var.imp
+PROGRAM IS
+  b,c
+IN
+  READ b;
+  IF 5 >  b THEN c := 1; WRITE c; ENDIF
+  IF 5 <  b THEN c := 2; WRITE c; ENDIF
+  IF 5 >= b THEN c := 3; WRITE c; ENDIF
+  IF 5 <= b THEN c := 4; WRITE c; ENDIF
+  IF 5 =  b THEN c := 5; WRITE c; ENDIF
+  IF 5 != b THEN c := 6; WRITE c; ENDIF
+  WRITE b;
+END
+
+### FILE: tests/testIf_const_var.test
+testIf_const_var.imp
+? 3
+> 1
+> 3
+> 6
+> 3
+
+testIf_const_var.imp
+? 7
+> 2
+> 4
+> 6
+> 7
+
+testIf_const_var.imp
+? 5
+> 3
+> 4
+> 5
+> 5
+
+
+### FILE: test_programs/testIf_arr_var.imp
+PROGRAM IS
+  t[1:1],b,c
+IN
+  READ b;
+  t[1] := 5;
+  IF t[1] >  b THEN c := 1; WRITE c; ENDIF
+  IF t[1] <  b THEN c := 2; WRITE c; ENDIF
+  IF t[1] >= b THEN c := 3; WRITE c; ENDIF
+  IF t[1] <= b THEN c := 4; WRITE c; ENDIF
+  IF t[1] =  b THEN c := 5; WRITE c; ENDIF
+  IF t[1] != b THEN c := 6; WRITE c; ENDIF
+  WRITE t[1];
+  WRITE b;
+END
+
+### FILE: tests/testIf_arr_var.test
+testIf_arr_var.imp
+? 3
+> 1
+> 3
+> 6
+> 5
+> 3
+
+testIf_arr_var.imp
+? 7
+> 2
+> 4
+> 6
+> 5
+> 7
+
+testIf_arr_var.imp
+? 5
+> 3
+> 4
+> 5
+> 5
+> 5
+
+
+### FILE: test_programs/testIf_var_arr.imp
+PROGRAM IS
+  a,t[1:1],c
+IN
+  READ a;
+  t[1] := 5;
+  IF a >  t[1] THEN c := 1; WRITE c; ENDIF
+  IF a <  t[1] THEN c := 2; WRITE c; ENDIF
+  IF a >= t[1] THEN c := 3; WRITE c; ENDIF
+  IF a <= t[1] THEN c := 4; WRITE c; ENDIF
+  IF a =  t[1] THEN c := 5; WRITE c; ENDIF
+  IF a != t[1] THEN c := 6; WRITE c; ENDIF
+  WRITE a;
+  WRITE t[1];
+END
+
+### FILE: tests/testIf_var_arr.test
+testIf_var_arr.imp
+? 7
+> 1
+> 3
+> 6
+> 7
+> 5
+
+testIf_var_arr.imp
+? 3
+> 2
+> 4
+> 6
+> 3
+> 5
+
+testIf_var_arr.imp
+? 5
+> 3
+> 4
+> 5
+> 5
+> 5
+
+
+### FILE: test_programs/testIf_arr_arr.imp
+PROGRAM IS
+  t[1:2],c, a
+IN
+  READ a;
+  t[1] := a;
+  READ a;
+  t[2] := a;
+  IF t[1] >  t[2] THEN c := 1; WRITE c; ENDIF
+  IF t[1] <  t[2] THEN c := 2; WRITE c; ENDIF
+  IF t[1] >= t[2] THEN c := 3; WRITE c; ENDIF
+  IF t[1] <= t[2] THEN c := 4; WRITE c; ENDIF
+  IF t[1] =  t[2] THEN c := 5; WRITE c; ENDIF
+  IF t[1] != t[2] THEN c := 6; WRITE c; ENDIF
+  WRITE t[1];
+  WRITE t[2];
+END
+
+### FILE: tests/testIf_arr_arr.test
+testIf_arr_arr.imp
+? 6 2
+> 1
+> 3
+> 6
+> 6
+> 2
+
+testIf_arr_arr.imp
+? 2 6
+> 2
+> 4
+> 6
+> 2
+> 6
+
+testIf_arr_arr.imp
+? 4 4
+> 3
+> 4
+> 5
+> 4
+> 4
+
+#############################
+# PROCEDURE CALL TEST BUNDLE #
+#############################
+
+################################
+# SIMPLE PROCEDURE – SCALARS   #
+################################
+
+### FILE: test_programs/testProc_simple_assign.imp
+PROCEDURE inc(I a) IS
+IN
+  a := a + 1;
+END
+
+PROGRAM IS
+  x
+IN
+  x := 5;
+  inc(x);
+  WRITE x;
+END
+
+### FILE: tests/testProc_simple_assign.test
+testProc_simple_assign.imp
+> 6
+
+
+################################
+# ALIASING (SAME VARIABLE)     #
+################################
+
+### FILE: test_programs/testProc_aliasing_same.imp
+PROCEDURE add(a, b) IS
+IN
+  a := a + b;
+END
+
+PROGRAM IS
+  x
+IN
+  x := 7;
+  add(x, x);
+  WRITE x;
+END
+
+### FILE: tests/testProc_aliasing_same.test
+testProc_aliasing_same.imp
+> 14
+
+
+################################
+# NESTED PROCEDURE CALLS       #
+################################
+
+### FILE: test_programs/testProc_nested_calls.imp
+PROCEDURE inc(I a) IS
+IN
+  a := a + 1;
+END
+
+PROCEDURE inc2(I a) IS
+IN
+  inc(a);
+  inc(a);
+END
+
+PROGRAM IS
+  x
+IN
+  x := 3;
+  inc2(x);
+  WRITE x;
+END
+
+### FILE: tests/testProc_nested_calls.test
+testProc_nested_calls.imp
+> 5
+
+
+################################
+# PASSING VALUES BACK & FORTH  #
+################################
+
+### FILE: test_programs/testProc_swap.imp
+PROCEDURE swap(I a, I b) IS
+  t
+IN
+  t := a;
+  a := b;
+  b := t;
+END
+
+PROGRAM IS
+  x,y
+IN
+  x := 4;
+  y := 9;
+  swap(x,y);
+  WRITE x;
+  WRITE y;
+END
+
+### FILE: tests/testProc_swap.test
+testProc_swap.imp
+> 9
+> 4
+
+
+################################
+# ARRAY PASSING (WRITE-BACK)   #
+################################
+
+### FILE: test_programs/testProc_array_pass.imp
+PROCEDURE fill(I t) IS
+IN
+  t[1] := 7;
+  t[2] := 11;
+END
+
+PROGRAM IS
+  a[1:2],x,y
+IN
+  fill(a);
+  x := a[1];
+  y := a[2];
+  WRITE x;
+  WRITE y;
+END
+
+### FILE: tests/testProc_array_pass.test
+testProc_array_pass.imp
+> 7
+> 11
+
+
+################################
+# ARRAY + SCALAR MIX           #
+################################
+
+### FILE: test_programs/testProc_array_scalar.imp
+PROCEDURE add_to_arr(I t, I x) IS
+IN
+  t[1] := t[1] + x;
+END
+
+PROGRAM IS
+  a[1:1],v,tmp
+IN
+  a[1] := 10;
+  v := 3;
+  add_to_arr(a,v);
+  tmp := a[1];
+  WRITE tmp;
+END
+
+### FILE: tests/testProc_array_scalar.test
+testProc_array_scalar.imp
+> 13
+
+
+################################
+# ARRAY FORWARDED THROUGH CALL #
+################################
+
+### FILE: test_programs/testProc_array_forward.imp
+PROCEDURE set1(I t) IS
+IN
+  t[1] := 5;
+END
+
+PROCEDURE set2(I t) IS
+IN
+  set1(t);
+  t[1] := t[1] + 2;
+END
+
+PROGRAM IS
+  a[1:1],x
+IN
+  set2(a);
+  x := a[1];
+  WRITE x;
+END
+
+### FILE: tests/testProc_array_forward.test
+testProc_array_forward.imp
+> 7
+
+
+################################
+# REGISTER SPILLING (8+ ARGS)  #
+################################
+
+### FILE: test_programs/testProc_many_args_new.imp
+PROCEDURE sum8(a,b,c,d,e,f,g,h, I out) IS
+IN
+  out := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h,res
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;
+  sum8(a,b,c,d,e,f,g,h,res);
+  WRITE res;
+END
+
+### FILE: tests/testProc_many_args_new.test
+testProc_many_args_new.imp
+> 36
+
+
+################################
+# SPILLING + ALIASING          #
+################################
+
+### FILE: test_programs/testProc_many_args_same.imp
+PROCEDURE add8(a,b,c,d,e,f,g,h) IS
+IN
+  a := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h
+IN
+  a:=1;b:=1;c:=1;d:=1;e:=1;f:=1;g:=1;h:=1;
+  add8(a,b,c,d,e,f,g,h);
+  WRITE a;
+END
+
+### FILE: tests/testProc_many_args_same.test
+testProc_many_args_same.imp
+> 8
+
+
+################################
+# ARRAY + MANY ARGS (SPILL)    #
+################################
+
+### FILE: test_programs/testProc_array_many_args.imp
+PROCEDURE touch(T t, a,b,c,d,e,f,g,h) IS
+IN
+  t[1] := a+b+c+d+e+f+g+h;
+END
+
+PROGRAM IS
+  a,b,c,d,e,f,g,h,arr[1:1],x
+IN
+  a:=1;b:=2;c:=3;d:=4;e:=5;f:=6;g:=7;h:=8;
+  touch(arr,a,b,c,d,e,f,g,h);
+  x := arr[1];
+  WRITE x;
+END
+
+### FILE: tests/testProc_array_many_args.test
+testProc_array_many_args.imp
+> 36
+
+
+#########################
+# MULTIPLICATION TESTS
+#########################
+
+### FILE: test_programs/testMul_const_const.imp
+PROGRAM IS
+  a
+IN
+  a := 3 * 2;
+  WRITE a;
+END
+
+### FILE: tests/testMul_const_const.test
+testMul_const_const.imp
+> 6
+
+### FILE: test_programs/testMul_var_var_new.imp
+PROGRAM IS
+  a,b,c
+IN
+  a:=3;
+  b:=4;
+  c:=a*b;
+  WRITE a;
+  WRITE b;
+  WRITE c;
+END
+
+### FILE: tests/testMul_var_var_new.test
+testMul_var_var_new.imp
+> 3
+> 4
+> 12
+
+### FILE: test_programs/testMul_var_var_sameL.imp
+PROGRAM IS
+  a,b
+IN
+  a:=3;
+  b:=4;
+  a:=a*b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testMul_var_var_sameL.test
+testMul_var_var_sameL.imp
+> 12
+> 4
+
+### FILE: test_programs/testMul_var_var_sameR.imp
+PROGRAM IS
+  a,b
+IN
+  a:=3;
+  b:=4;
+  b:=a*b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testMul_var_var_sameR.test
+testMul_var_var_sameR.imp
+> 3
+> 12
+
+### FILE: test_programs/testMul_var_const.imp
+PROGRAM IS
+  a,c
+IN
+  a:=5;
+  c:=a*2;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testMul_var_const.test
+testMul_var_const.imp
+> 5
+> 10
+
+### FILE: test_programs/testMul_const_var.imp
+PROGRAM IS
+  a,c
+IN
+  a:=5;
+  c:=2*a;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testMul_const_var.test
+testMul_const_var.imp
+> 5
+> 10
+
+### FILE: test_programs/testMul_arr_const.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=4;
+  c:=t[1]*3;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testMul_arr_const.test
+testMul_arr_const.imp
+> 4
+> 12
+
+### FILE: test_programs/testMul_const_arr.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=4;
+  c:=3*t[1];
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testMul_const_arr.test
+testMul_const_arr.imp
+> 4
+> 12
+
+### FILE: test_programs/testMul_var_arr.imp
+PROGRAM IS
+  a,t[1:1],c
+IN
+  a:=5;
+  t[1]:=6;
+  c:=a*t[1];
+  WRITE a;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testMul_var_arr.test
+testMul_var_arr.imp
+> 5
+> 6
+> 30
+
+### FILE: test_programs/testMul_arr_arr.imp
+PROGRAM IS
+  t[1:2],c
+IN
+  t[1]:=7;
+  t[2]:=3;
+  c:=t[1]*t[2];
+  WRITE t[1];
+  WRITE t[2];
+  WRITE c;
+END
+
+### FILE: tests/testMul_arr_arr.test
+testMul_arr_arr.imp
+> 7
+> 3
+> 21
+
+#########################
+# INTEGER DIVISION TESTS
+#########################
+
+### FILE: test_programs/testDiv_const_const.imp
+PROGRAM IS
+  a
+IN
+  a := 6 / 2;
+  WRITE a;
+END
+
+### FILE: tests/testDiv_const_const.test
+testDiv_const_const.imp
+> 3
+
+### FILE: test_programs/testDiv_var_var_new.imp
+PROGRAM IS
+  a,b,c
+IN
+  a:=8;
+  b:=2;
+  c:=a/b;
+  WRITE a;
+  WRITE b;
+  WRITE c;
+END
+
+### FILE: tests/testDiv_var_var_new.test
+testDiv_var_var_new.imp
+> 8
+> 2
+> 4
+
+### FILE: test_programs/testDiv_var_var_sameL.imp
+PROGRAM IS
+  a,b
+IN
+  a:=8;
+  b:=2;
+  a:=a/b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testDiv_var_var_sameL.test
+testDiv_var_var_sameL.imp
+> 4
+> 2
+
+### FILE: test_programs/testDiv_var_var_sameR.imp
+PROGRAM IS
+  a,b
+IN
+  a:=8;
+  b:=2;
+  b:=a/b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testDiv_var_var_sameR.test
+testDiv_var_var_sameR.imp
+> 8
+> 4
+
+### FILE: test_programs/testDiv_var_const.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=a/2;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testDiv_var_const.test
+testDiv_var_const.imp
+> 10
+> 5
+
+### FILE: test_programs/testDiv_const_var.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=20/a;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testDiv_const_var.test
+testDiv_const_var.imp
+> 10
+> 2
+
+### FILE: test_programs/testDiv_arr_const.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=8;
+  c:=t[1]/2;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testDiv_arr_const.test
+testDiv_arr_const.imp
+> 8
+> 4
+
+### FILE: test_programs/testDiv_const_arr.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=8;
+  c:=16/t[1];
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testDiv_const_arr.test
+testDiv_const_arr.imp
+> 8
+> 2
+
+### FILE: test_programs/testDiv_var_arr.imp
+PROGRAM IS
+  a,t[1:1],c
+IN
+  a:=10;
+  t[1]:=5;
+  c:=a/t[1];
+  WRITE a;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testDiv_var_arr.test
+testDiv_var_arr.imp
+> 10
+> 5
+> 2
+
+### FILE: test_programs/testDiv_arr_arr.imp
+PROGRAM IS
+  t[1:2],c
+IN
+  t[1]:=9;
+  t[2]:=3;
+  c:=t[1]/t[2];
+  WRITE t[1];
+  WRITE t[2];
+  WRITE c;
+END
+
+### FILE: tests/testDiv_arr_arr.test
+testDiv_arr_arr.imp
+> 9
+> 3
+> 3
+
+### FILE: test_programs/testDiv_div0.imp
+PROGRAM IS
+  a,b,c
+IN
+  a:=5;
+  b:=0;
+  c:=a/b;
+  WRITE a;
+  WRITE b;
+  WRITE c;
+END
+
+### FILE: tests/testDiv_div0.test
+testDiv_div0.imp
+> 5
+> 0
+> 0
+
+#########################
+# MODULO TESTS
+#########################
+
+### FILE: test_programs/testMod_const_const.imp
+PROGRAM IS
+  a
+IN
+  a := 7 % 3;
+  WRITE a;
+END
+
+### FILE: tests/testMod_const_const.test
+testMod_const_const.imp
+> 1
+
+### FILE: test_programs/testMod_var_var_new.imp
+PROGRAM IS
+  a,b,c
+IN
+  a:=8;
+  b:=3;
+  c:=a%b;
+  WRITE a;
+  WRITE b;
+  WRITE c;
+END
+
+### FILE: tests/testMod_var_var_new.test
+testMod_var_var_new.imp
+> 8
+> 3
+> 2
+
+### FILE: test_programs/testMod_var_var_sameL.imp
+PROGRAM IS
+  a,b
+IN
+  a:=8;
+  b:=3;
+  a:=a%b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testMod_var_var_sameL.test
+testMod_var_var_sameL.imp
+> 2
+> 3
+
+### FILE: test_programs/testMod_var_var_sameR.imp
+PROGRAM IS
+  a,b
+IN
+  a:=8;
+  b:=3;
+  b:=a%b;
+  WRITE a;
+  WRITE b;
+END
+
+### FILE: tests/testMod_var_var_sameR.test
+testMod_var_var_sameR.imp
+> 8
+> 2
+
+### FILE: test_programs/testMod_var_const.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=a%3;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testMod_var_const.test
+testMod_var_const.imp
+> 10
+> 1
+
+### FILE: test_programs/testMod_const_var.imp
+PROGRAM IS
+  a,c
+IN
+  a:=10;
+  c:=20%a;
+  WRITE a;
+  WRITE c;
+END
+
+### FILE: tests/testMod_const_var.test
+testMod_const_var.imp
+> 10
+> 0
+
+### FILE: test_programs/testMod_arr_const.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=7;
+  c:=t[1]%3;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testMod_arr_const.test
+testMod_arr_const.imp
+> 7
+> 1
+
+### FILE: test_programs/testMod_const_arr.imp
+PROGRAM IS
+  t[1:1],c
+IN
+  t[1]:=7;
+  c:=10%t[1];
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testMod_const_arr.test
+testMod_const_arr.imp
+> 7
+> 3
+
+### FILE: test_programs/testMod_var_arr.imp
+PROGRAM IS
+  a,t[1:1],c
+IN
+  a:=10;
+  t[1]:=3;
+  c:=a%t[1];
+  WRITE a;
+  WRITE t[1];
+  WRITE c;
+END
+
+### FILE: tests/testMod_var_arr.test
+testMod_var_arr.imp
+> 10
+> 3
+> 1
+
+### FILE: test_programs/testMod_arr_arr.imp
+PROGRAM IS
+  t[1:2],c
+IN
+  t[1]:=10;
+  t[2]:=3;
+  c:=t[1]%t[2];
+  WRITE t[1];
+  WRITE t[2];
+  WRITE c;
+END
+
+### FILE: tests/testMod_arr_arr.test
+testMod_arr_arr.imp
+> 10
+> 3
+> 1
+
+### FILE: test_programs/testMod_mod0.imp
+PROGRAM IS
+  a,b,c
+IN
+  a:=5;
+  b:=0;
+  c:=a%b;
+  WRITE a;
+  WRITE b;
+  WRITE c;
+END
+
+### FILE: tests/testMod_mod0.test
+testMod_mod0.imp
+> 5
+> 0
+> 0
+

@@ -1,0 +1,17 @@
+PROGRAM IS
+  t[1:2],c, a
+IN
+  READ a;
+  t[1] := a;
+  READ a;
+  t[2] := a;
+  IF t[1] >  t[2] THEN c := 1; WRITE c; ENDIF
+  IF t[1] <  t[2] THEN c := 2; WRITE c; ENDIF
+  IF t[1] >= t[2] THEN c := 3; WRITE c; ENDIF
+  IF t[1] <= t[2] THEN c := 4; WRITE c; ENDIF
+  IF t[1] =  t[2] THEN c := 5; WRITE c; ENDIF
+  IF t[1] != t[2] THEN c := 6; WRITE c; ENDIF
+  WRITE t[1];
+  WRITE t[2];
+END
+

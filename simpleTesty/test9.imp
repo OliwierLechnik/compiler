@@ -1,0 +1,11 @@
+PROGRAM IS
+  m
+IN
+  READ m;
+  m := m*m;
+  m := m*m;
+  m := m*m;
+  m := m*m;
+  m := m*m;
+  WRITE m;
+END

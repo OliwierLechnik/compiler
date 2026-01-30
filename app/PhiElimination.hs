@@ -9,142 +9,113 @@ import qualified Data.Map as Map
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.List (foldl')
+import Control.Monad (foldM, forM)
 import Data.Maybe (fromMaybe)
+import Control.Monad.State
 
 import IR
+
+-- State to generate fresh temporary registers during Phi lowering
+type PhiGen a = State Integer a
 
 eliminatePhis :: ProgramIR -> ProgramIR
 eliminatePhis prog = 
     let 
-        noPhisProg = lowerPhis prog
-        optimizedProg = coalesceMoves noPhisProg
+        -- Calculate max VReg to initialize state for fresh temps
+        maxV = maxVRegProgram prog
+        (noPhisProg, _) = runState (lowerPhis prog) (maxV + 1)
     in
-        optimizedProg
+        -- Phase 2 (Coalescing) is REMOVED because it was unsafe.
+        -- The Register Allocator will handle safe coalescing.
+        noPhisProg
 
--- ... (Phase 1 LowerPhis is identical to previous) ...
-lowerPhis :: ProgramIR -> ProgramIR
-lowerPhis (ProgramIR blockMap) = 
-    let 
-        movesMap = collectPhiMoves blockMap
-        finalBlockMap = foldl' applyMoves blockMap (Map.toList movesMap)
-        cleanedBlockMap = Map.map clearPhis finalBlockMap
-    in
-        ProgramIR cleanedBlockMap
+maxVRegProgram :: ProgramIR -> Integer
+maxVRegProgram (ProgramIR blocks) = Map.foldr checkBlock 0 blocks
+  where
+    checkBlock b m = foldr checkInstr m (blockInsns b)
+    checkInstr (Move (VReg v) _) m = max v m
+    checkInstr (Compute _ (VReg v) _ _) m = max v m
+    checkInstr (Load (VReg v) _) m = max v m
+    checkInstr (LoadIndirect (VReg v) _) m = max v m
+    checkInstr _ m = m
 
-collectPhiMoves :: Map Label Block -> Map (Label, Label) [Middle]
+-- ===========================================================================
+-- Phase 1: Lower Phis with Parallel Copy Safety
+-- ===========================================================================
+
+lowerPhis :: ProgramIR -> PhiGen ProgramIR
+lowerPhis (ProgramIR blockMap) = do
+    let movesMap = collectPhiMoves blockMap
+    finalBlockMap <- foldM applyMoves blockMap (Map.toList movesMap)
+    let cleanedBlockMap = Map.map clearPhis finalBlockMap
+    return $ ProgramIR cleanedBlockMap
+
+collectPhiMoves :: Map Label Block -> Map (Label, Label) [(VReg, Operand)]
 collectPhiMoves blocks = 
     Map.foldrWithKey scanBlock Map.empty blocks
   where
-    scanBlock :: Label -> Block -> Map (Label, Label) [Middle] -> Map (Label, Label) [Middle]
+    scanBlock :: Label -> Block -> Map (Label, Label) [(VReg, Operand)] -> Map (Label, Label) [(VReg, Operand)]
     scanBlock succLbl blk acc = 
         foldl' (accumulateMoves succLbl) acc (blockPhis blk)
 
-    accumulateMoves :: Label -> Map (Label, Label) [Middle] -> Phi -> Map (Label, Label) [Middle]
+    accumulateMoves :: Label -> Map (Label, Label) [(VReg, Operand)] -> Phi -> Map (Label, Label) [(VReg, Operand)]
     accumulateMoves succLbl accMap (Phi vDest sources) = 
         foldl' (\m (predLbl, srcOp) -> 
-            let move = Move vDest srcOp
-                key = (predLbl, succLbl)
-            in Map.insertWith (++) key [move] m
+            let key = (predLbl, succLbl)
+            in Map.insertWith (++) key [(vDest, srcOp)] m
         ) accMap sources
 
-applyMoves :: Map Label Block -> ((Label, Label), [Middle]) -> Map Label Block
-applyMoves blocks ((predLbl, succLbl), moves) = 
+applyMoves :: Map Label Block -> ((Label, Label), [(VReg, Operand)]) -> PhiGen (Map Label Block)
+applyMoves blocks ((predLbl, succLbl), assignments) = do
+    -- Generate safe sequence of moves using temporaries to handle swaps/cycles.
+    safeMoves <- generateSafeMoves assignments
+
     case Map.lookup predLbl blocks of
         Nothing -> error $ "Phi predecessor block not found: " ++ T.unpack predLbl
         Just predBlk ->
             case blockTerm predBlk of
-                Jump target | target == succLbl ->
-                    let newBlk = predBlk { blockInsns = blockInsns predBlk ++ moves }
-                    in Map.insert predLbl newBlk blocks
+                Jump target | target == succLbl -> do
+                    let newBlk = predBlk { blockInsns = blockInsns predBlk ++ safeMoves }
+                    return $ Map.insert predLbl newBlk blocks
                 
-                Branch cond v1 op t f | t == succLbl || f == succLbl ->
+                Branch cond v1 op t f | t == succLbl || f == succLbl -> do
                     let 
                         splitLbl = predLbl <> "_split_" <> succLbl
                         splitBlk = Block
                             { blockLabel = splitLbl
                             , blockArgs  = [] 
                             , blockPhis  = []
-                            , blockInsns = moves
+                            , blockInsns = safeMoves
                             , blockTerm  = Jump succLbl
                             }
                         newT = if t == succLbl then splitLbl else t
                         newF = if f == succLbl then splitLbl else f
                         newTerm = Branch cond v1 op newT newF
                         newPredBlk = predBlk { blockTerm = newTerm }
-                    in
-                        Map.insert splitLbl splitBlk (Map.insert predLbl newPredBlk blocks)
+                    return $ Map.insert splitLbl splitBlk (Map.insert predLbl newPredBlk blocks)
 
-                _ -> blocks 
+                _ -> return blocks 
+
+generateSafeMoves :: [(VReg, Operand)] -> PhiGen [Middle]
+generateSafeMoves assignments = do
+    -- 1. Read all sources into fresh temporaries
+    tempReads <- forM assignments $ \(_, srcOp) -> do
+        tmp <- freshTemp
+        return (tmp, srcOp) -- Move tmp srcOp
+    
+    -- 2. Write temporaries to destinations
+    let tempWrites = zipWith (\(vDest, _) (tmp, _) -> (vDest, OpReg tmp)) assignments tempReads
+
+    let readInstrs  = map (\(t, s) -> Move t s) tempReads
+    let writeInstrs = map (\(d, s) -> Move d s) tempWrites
+    
+    return $ readInstrs ++ writeInstrs
+
+freshTemp :: PhiGen VReg
+freshTemp = do
+    c <- get
+    put (c + 1)
+    return (VReg c)
 
 clearPhis :: Block -> Block
 clearPhis b = b { blockPhis = [] }
-
--- ===========================================================================
--- Phase 2: Variable Coalescing with Chain Resolution
--- ===========================================================================
-
-coalesceMoves :: ProgramIR -> ProgramIR
-coalesceMoves (ProgramIR blocks) = 
-    let
-        renames = Map.foldr findMoves Map.empty blocks
-        
-        -- Logic: Map vSrc -> vDest.
-        -- If v1 -> v2, and we see Move v2 (OpReg v1), we record v1 -> v2.
-        -- We need to ensure transitive closure.
-        findMoves :: Block -> Map VReg VReg -> Map VReg VReg
-        findMoves blk m = foldl' checkInstr m (blockInsns blk)
-        
-        checkInstr m (Move vDest (OpReg vSrc)) 
-            | vDest /= vSrc = 
-                -- We are replacing vSrc with vDest.
-                -- 1. Check if vDest is already mapped to something (chaining forward)
-                let finalDest = Map.findWithDefault vDest vDest m
-                    
-                    -- 2. Insert vSrc -> finalDest
-                    m' = Map.insert vSrc finalDest m
-                    
-                    -- 3. Path Compression: Update all existing keys pointing to vSrc
-                    -- If we had vX -> vSrc, now vSrc -> finalDest, so update vX -> finalDest
-                    m'' = Map.map (\v -> if v == vSrc then finalDest else v) m'
-                in m''
-        checkInstr m _ = m
-
-        renamedBlocks = Map.map (renameBlock renames) blocks
-    in
-        ProgramIR renamedBlocks
-
-renameBlock :: Map VReg VReg -> Block -> Block
-renameBlock env b = 
-    b { blockArgs  = map rV (blockArgs b)
-      , blockInsns = filter (not . isSelfMove) $ map rI (blockInsns b)
-      , blockTerm  = rT (blockTerm b)
-      }
-  where
-    rV :: VReg -> VReg
-    rV v = fromMaybe v (Map.lookup v env)
-
-    rOp :: Operand -> Operand
-    rOp (OpReg v) = OpReg (rV v)
-    rOp x = x
-
-    isSelfMove :: Middle -> Bool
-    isSelfMove (Move v1 (OpReg v2)) = v1 == v2
-    isSelfMove _ = False
-
-    rI :: Middle -> Middle
-    rI (Move v op)          = Move (rV v) (rOp op)
-    rI (Compute o v o1 o2)  = Compute o (rV v) (rOp o1) (rOp o2)
-    rI (Load v a)           = Load (rV v) a
-    rI (Store a op)         = Store a (rOp op)
-    rI (LoadIndirect v p)   = LoadIndirect (rV v) (rV p)
-    rI (StoreIndirect p op) = StoreIndirect (rV p) (rOp op)
-    rI (Print v)            = Print (rV v)
-    rI (ReadInput v)        = ReadInput (rV v)
-    rI (Call l ops)         = Call l (map rOp ops)
-    rI (StoreRetAddr v)     = StoreRetAddr (rV v)
-    rI (LoadRetAddr v)      = LoadRetAddr (rV v)
-    rI x = x
-
-    rT :: Terminator -> Terminator
-    rT (Branch c v op l1 l2) = Branch c (rV v) (rOp op) l1 l2
-    rT x = x

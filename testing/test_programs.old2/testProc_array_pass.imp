@@ -1,0 +1,16 @@
+PROCEDURE fill(I t) IS
+IN
+  t[1] := 7;
+  t[2] := 11;
+END
+
+PROGRAM IS
+  a[1:2],x,y
+IN
+  fill(a);
+  x := a[1];
+  y := a[2];
+  WRITE x;
+  WRITE y;
+END
+

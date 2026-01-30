@@ -1,0 +1,61 @@
+READ
+SWP b
+READ
+SWP c
+RST a
+ADD b
+SHL a
+SHL a
+ADD b
+SHL a
+SWP d
+RST a
+ADD c
+SHL a
+ADD c
+SHL a
+SHL a
+SHL a
+ADD c
+SHL a
+SHL a
+SWP e
+RST a
+ADD b
+SWP b
+RST a
+ADD c
+SWP c
+RST f
+RST a
+ADD c
+JZERO 48
+RST a
+ADD c
+SWP g
+SHR g
+SHL g
+RST a
+ADD c
+SUB g
+JZERO 45
+RST a
+ADD f
+ADD b
+SWP f
+SHL b
+SHR c
+JUMP 29
+RST a
+ADD f
+SWP b
+RST a
+ADD d
+WRITE
+RST a
+ADD e
+WRITE
+RST a
+ADD b
+WRITE
+HALT

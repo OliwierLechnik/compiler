@@ -1,0 +1,42 @@
+JUMP 15
+SWP d
+RLOAD b
+SWP e
+RLOAD c
+SWP f
+RST a
+ADD e
+ADD f
+SWP e
+RST a
+ADD e
+RSTORE b
+SWP d
+RTRN
+RST a
+INC a
+SHL a
+SHL a
+SHL a
+DEC a
+SWP d
+RST a
+ADD d
+STORE 0
+RST a
+ADD d
+STORE 1
+RST a
+SWP b
+RST a
+INC a
+SWP c
+CALL 1
+LOAD 0
+SWP b
+LOAD 1
+SWP b
+RST a
+ADD b
+WRITE
+HALT

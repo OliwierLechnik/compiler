@@ -1,0 +1,31 @@
+JUMP 13
+SWP c
+RLOAD b
+SWP d
+RST a
+ADD d
+INC a
+SWP d
+RST a
+ADD d
+RSTORE b
+SWP c
+RTRN
+RST a
+INC a
+SHL a
+SHL a
+INC a
+SWP c
+RST a
+ADD c
+STORE 0
+RST a
+SWP b
+CALL 1
+LOAD 0
+SWP b
+RST a
+ADD b
+WRITE
+HALT

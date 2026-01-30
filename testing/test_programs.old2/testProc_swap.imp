@@ -1,0 +1,18 @@
+PROCEDURE swap(I a, I b) IS
+  t
+IN
+  t := a;
+  a := b;
+  b := t;
+END
+
+PROGRAM IS
+  x,y
+IN
+  x := 4;
+  y := 9;
+  swap(x,y);
+  WRITE x;
+  WRITE y;
+END
+
